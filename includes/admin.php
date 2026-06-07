@@ -13,6 +13,15 @@ add_action( 'admin_menu', function () {
         'dashicons-admin-site-alt3',
         60
     );
+    // Override the auto-generated duplicate submenu title ("Soames" → "Settings").
+    add_submenu_page(
+        'soames-settings',
+        'Soames Settings',
+        'Settings',
+        'manage_options',
+        'soames-settings',
+        'soames_settings_page'
+    );
     add_submenu_page(
         'soames-settings',
         'Site Assets',
@@ -61,6 +70,16 @@ function soames_register_settings() {
         'type'              => 'string',
         'sanitize_callback' => 'wp_kses_post',
         'default'           => '',
+    ] );
+    register_setting( 'soames_assets_options', 'soames_company_name', [
+        'type'              => 'string',
+        'sanitize_callback' => 'sanitize_text_field',
+        'default'           => '',
+    ] );
+    register_setting( 'soames_assets_options', 'soames_show_company_name', [
+        'type'              => 'integer',
+        'sanitize_callback' => 'absint',
+        'default'           => 1,
     ] );
 }
 
@@ -176,6 +195,39 @@ function soames_site_assets_page() {
                             <button type="button" class="button soames-media-clear" data-target="soames_favicon" style="margin-left:4px;">Remove</button>
                         <?php endif; ?>
                         <p class="description">Browser tab icon. Use a PNG — 32×32px or 64×64px recommended.</p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row"><label for="soames_company_name">Company name</label></th>
+                    <td>
+                        <input
+                            type="text"
+                            id="soames_company_name"
+                            name="soames_company_name"
+                            value="<?php echo esc_attr( get_option( 'soames_company_name', '' ) ); ?>"
+                            class="regular-text"
+                            placeholder="Acme Corp"
+                        />
+                        <p class="description">Displayed in the site header next to the logo. Leave blank to use the WordPress site title.</p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">Show company name in header</th>
+                    <td>
+                        <input type="hidden" name="soames_show_company_name" value="0" />
+                        <label>
+                            <input
+                                type="checkbox"
+                                id="soames_show_company_name"
+                                name="soames_show_company_name"
+                                value="1"
+                                <?php checked( 1, get_option( 'soames_show_company_name', 1 ) ); ?>
+                            />
+                            Show company name in the header alongside the logo
+                        </label>
+                        <p class="description">Uncheck for sites where the logo image already contains the company name.</p>
                     </td>
                 </tr>
 

@@ -15,14 +15,17 @@ add_action( 'rest_api_init', function () {
 } );
 
 function soames_plugin_rest_settings() {
-    $logo_id    = (int) get_option( 'soames_logo_id' );
-    $favicon_id = (int) get_option( 'soames_favicon_id' );
-    $blurb      = get_option( 'soames_contact_blurb', '' );
+    $logo_id      = (int) get_option( 'soames_logo_id' );
+    $favicon_id   = (int) get_option( 'soames_favicon_id' );
+    $blurb        = get_option( 'soames_contact_blurb', '' );
+    $company_name = get_option( 'soames_company_name', '' );
 
     return [
-        'logoUrl'      => $logo_id    ? wp_get_attachment_url( $logo_id )                                    : null,
-        'logoAlt'      => $logo_id    ? (string) get_post_meta( $logo_id, '_wp_attachment_image_alt', true )  : null,
-        'faviconUrl'   => $favicon_id ? wp_get_attachment_url( $favicon_id )                                  : null,
-        'contactBlurb' => $blurb !== '' ? $blurb                                                              : null,
+        'logoUrl'         => $logo_id    ? wp_get_attachment_url( $logo_id )                                    : null,
+        'logoAlt'         => $logo_id    ? (string) get_post_meta( $logo_id, '_wp_attachment_image_alt', true )  : null,
+        'faviconUrl'      => $favicon_id ? wp_get_attachment_url( $favicon_id )                                  : null,
+        'contactBlurb'    => $blurb !== '' ? $blurb                                                              : null,
+        'companyName'     => $company_name !== '' ? $company_name                                                : null,
+        'showCompanyName' => (bool) get_option( 'soames_show_company_name', 1 ),
     ];
 }
