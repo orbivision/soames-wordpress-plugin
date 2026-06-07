@@ -10,6 +10,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// Must run before WPGraphQL builds its schema (before graphql_register_types).
+// Called directly here rather than in an init hook to ensure it's registered
+// early enough for WPGraphQL to pick it up regardless of hook order.
+add_post_type_support( 'page', 'excerpt' );
+
 define( 'SOAMES_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SOAMES_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
