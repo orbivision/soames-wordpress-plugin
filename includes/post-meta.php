@@ -1,6 +1,13 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
+// ── Page excerpt support ──────────────────────────────────────────────────────
+// Enables the excerpt field on Pages so WPGraphQL exposes it as excerptField.
+
+add_action( 'init', function () {
+    add_post_type_support( 'page', 'excerpt' );
+} );
+
 // ── Register soames_overlay_opacity post meta ─────────────────────────────────
 
 add_action( 'init', function () {
