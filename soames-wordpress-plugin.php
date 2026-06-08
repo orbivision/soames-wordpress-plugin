@@ -19,6 +19,7 @@ define( 'SOAMES_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SOAMES_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 require_once SOAMES_PLUGIN_DIR . 'includes/admin.php';
+require_once SOAMES_PLUGIN_DIR . 'includes/nav-menus.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/preview.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/cors.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/post-meta.php';
