@@ -24,3 +24,4 @@ require_once SOAMES_PLUGIN_DIR . 'includes/preview.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/cors.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/post-meta.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/settings-api.php';
+require_once SOAMES_PLUGIN_DIR . 'includes/blocks.php';

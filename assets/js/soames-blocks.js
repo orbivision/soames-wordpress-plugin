@@ -1,0 +1,183 @@
+(function () {
+  var registerBlockType = wp.blocks.registerBlockType;
+  var el = wp.element.createElement;
+  var TextControl = wp.components.TextControl;
+  var useBlockProps = wp.blockEditor.useBlockProps;
+
+  var CATEGORY = 'soames';
+  var existingCategories = wp.blocks.getCategories();
+  if (!existingCategories.find(function (c) { return c.slug === CATEGORY; })) {
+    wp.blocks.setCategories(existingCategories.concat([{ slug: CATEGORY, title: 'Soames' }]));
+  }
+
+  // soames/title-bar
+  registerBlockType('soames/title-bar', {
+    title: 'Soames Title Bar',
+    icon: 'heading',
+    category: CATEGORY,
+    attributes: {
+      title: { type: 'string', default: '' }
+    },
+    edit: function (props) {
+      return el('div', useBlockProps(),
+        el(TextControl, {
+          label: 'Title',
+          value: props.attributes.title,
+          onChange: function (v) { props.setAttributes({ title: v }); }
+        })
+      );
+    },
+    save: function () { return null; }
+  });
+
+  // soames/title-bar-lg
+  registerBlockType('soames/title-bar-lg', {
+    title: 'Soames Title Bar (Large)',
+    icon: 'cover-image',
+    category: CATEGORY,
+    attributes: {
+      title:      { type: 'string', default: '' },
+      subtitle:   { type: 'string', default: '' },
+      background: { type: 'string', default: '' }
+    },
+    edit: function (props) {
+      return el('div', useBlockProps(),
+        el(TextControl, { label: 'Title',          value: props.attributes.title,      onChange: function (v) { props.setAttributes({ title: v }); } }),
+        el(TextControl, { label: 'Subtitle',       value: props.attributes.subtitle,   onChange: function (v) { props.setAttributes({ subtitle: v }); } }),
+        el(TextControl, { label: 'Background URL', value: props.attributes.background, onChange: function (v) { props.setAttributes({ background: v }); } })
+      );
+    },
+    save: function () { return null; }
+  });
+
+  // soames/icon-list
+  registerBlockType('soames/icon-list', {
+    title: 'Soames Icon List',
+    icon: 'list-view',
+    category: CATEGORY,
+    attributes: {
+      images: { type: 'string', default: '' },
+      labels: { type: 'string', default: '' },
+      links:  { type: 'string', default: '' },
+      css:    { type: 'string', default: '' }
+    },
+    edit: function (props) {
+      return el('div', useBlockProps(),
+        el('p', {}, 'Enter comma-separated values for each icon item:'),
+        el(TextControl, { label: 'Image URLs (comma-separated)',  value: props.attributes.images, onChange: function (v) { props.setAttributes({ images: v }); } }),
+        el(TextControl, { label: 'Labels (comma-separated)',      value: props.attributes.labels, onChange: function (v) { props.setAttributes({ labels: v }); } }),
+        el(TextControl, { label: 'Links (comma-separated)',       value: props.attributes.links,  onChange: function (v) { props.setAttributes({ links: v }); } }),
+        el(TextControl, { label: 'CSS Classes (comma-separated)', value: props.attributes.css,    onChange: function (v) { props.setAttributes({ css: v }); } })
+      );
+    },
+    save: function () { return null; }
+  });
+
+  // soames/feature
+  registerBlockType('soames/feature', {
+    title: 'Soames Feature',
+    icon: 'align-left',
+    category: CATEGORY,
+    attributes: {
+      content: { type: 'string', default: '' },
+      image:   { type: 'string', default: '' },
+      title:   { type: 'string', default: '' },
+      css:     { type: 'string', default: '' }
+    },
+    edit: function (props) {
+      return el('div', useBlockProps(),
+        el(TextControl, { label: 'Title',     value: props.attributes.title,   onChange: function (v) { props.setAttributes({ title: v }); } }),
+        el(TextControl, { label: 'Content',   value: props.attributes.content, onChange: function (v) { props.setAttributes({ content: v }); } }),
+        el(TextControl, { label: 'Image URL', value: props.attributes.image,   onChange: function (v) { props.setAttributes({ image: v }); } }),
+        el(TextControl, { label: 'CSS Class', value: props.attributes.css,     onChange: function (v) { props.setAttributes({ css: v }); } })
+      );
+    },
+    save: function () { return null; }
+  });
+
+  // soames/gallery-menu
+  registerBlockType('soames/gallery-menu', {
+    title: 'Soames Gallery Menu',
+    icon: 'grid-view',
+    category: CATEGORY,
+    attributes: {
+      images: { type: 'string', default: '' },
+      labels: { type: 'string', default: '' },
+      links:  { type: 'string', default: '' },
+      css:    { type: 'string', default: '' }
+    },
+    edit: function (props) {
+      return el('div', useBlockProps(),
+        el('p', {}, 'Enter comma-separated values:'),
+        el(TextControl, { label: 'Image URLs', value: props.attributes.images, onChange: function (v) { props.setAttributes({ images: v }); } }),
+        el(TextControl, { label: 'Labels',     value: props.attributes.labels, onChange: function (v) { props.setAttributes({ labels: v }); } }),
+        el(TextControl, { label: 'Links',      value: props.attributes.links,  onChange: function (v) { props.setAttributes({ links: v }); } }),
+        el(TextControl, { label: 'CSS Classes',value: props.attributes.css,    onChange: function (v) { props.setAttributes({ css: v }); } })
+      );
+    },
+    save: function () { return null; }
+  });
+
+  // soames/video
+  registerBlockType('soames/video', {
+    title: 'Soames Video',
+    icon: 'video-alt3',
+    category: CATEGORY,
+    attributes: {
+      link:  { type: 'string', default: '' },
+      title: { type: 'string', default: '' }
+    },
+    edit: function (props) {
+      return el('div', useBlockProps(),
+        el(TextControl, { label: 'Video URL', value: props.attributes.link,  onChange: function (v) { props.setAttributes({ link: v }); } }),
+        el(TextControl, { label: 'Title',     value: props.attributes.title, onChange: function (v) { props.setAttributes({ title: v }); } })
+      );
+    },
+    save: function () { return null; }
+  });
+
+  // soames/soundcloud
+  registerBlockType('soames/soundcloud', {
+    title: 'Soames SoundCloud',
+    icon: 'format-audio',
+    category: CATEGORY,
+    attributes: {
+      bandName:   { type: 'string', default: '' },
+      siteLink:   { type: 'string', default: '' },
+      playlistId: { type: 'string', default: '' },
+      albumLink:  { type: 'string', default: '' },
+      albumName:  { type: 'string', default: '' }
+    },
+    edit: function (props) {
+      return el('div', useBlockProps(),
+        el(TextControl, { label: 'Band Name',   value: props.attributes.bandName,   onChange: function (v) { props.setAttributes({ bandName: v }); } }),
+        el(TextControl, { label: 'Site Link',   value: props.attributes.siteLink,   onChange: function (v) { props.setAttributes({ siteLink: v }); } }),
+        el(TextControl, { label: 'Playlist ID', value: props.attributes.playlistId, onChange: function (v) { props.setAttributes({ playlistId: v }); } }),
+        el(TextControl, { label: 'Album Link',  value: props.attributes.albumLink,  onChange: function (v) { props.setAttributes({ albumLink: v }); } }),
+        el(TextControl, { label: 'Album Name',  value: props.attributes.albumName,  onChange: function (v) { props.setAttributes({ albumName: v }); } })
+      );
+    },
+    save: function () { return null; }
+  });
+
+  // soames/text-list
+  registerBlockType('soames/text-list', {
+    title: 'Soames Text List',
+    icon: 'editor-ul',
+    category: CATEGORY,
+    attributes: {
+      content: { type: 'string', default: '' }
+    },
+    edit: function (props) {
+      return el('div', useBlockProps(),
+        el(TextControl, {
+          label: 'Content (HTML)',
+          value: props.attributes.content,
+          onChange: function (v) { props.setAttributes({ content: v }); }
+        })
+      );
+    },
+    save: function () { return null; }
+  });
+
+})();
