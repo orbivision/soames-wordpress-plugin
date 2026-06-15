@@ -1,6 +1,14 @@
 <?php
 defined('ABSPATH') || exit;
 
+add_filter('block_categories_all', 'soames_block_categories', 10, 2);
+
+function soames_block_categories($categories) {
+    return array_merge($categories, [
+        ['slug' => 'soames', 'title' => 'Soames', 'icon' => null],
+    ]);
+}
+
 add_action('init', 'soames_register_blocks');
 
 function soames_register_blocks() {

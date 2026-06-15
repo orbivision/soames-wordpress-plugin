@@ -2,13 +2,8 @@
   var registerBlockType = wp.blocks.registerBlockType;
   var el = wp.element.createElement;
   var TextControl = wp.components.TextControl;
-  var useBlockProps = wp.blockEditor.useBlockProps;
 
   var CATEGORY = 'soames';
-  var existingCategories = wp.blocks.getCategories();
-  if (!existingCategories.find(function (c) { return c.slug === CATEGORY; })) {
-    wp.blocks.setCategories(existingCategories.concat([{ slug: CATEGORY, title: 'Soames' }]));
-  }
 
   // soames/title-bar
   registerBlockType('soames/title-bar', {
@@ -19,7 +14,8 @@
       title: { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', useBlockProps(),
+      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+        el('strong', {}, 'Soames Title Bar'),
         el(TextControl, {
           label: 'Title',
           value: props.attributes.title,
@@ -41,7 +37,8 @@
       background: { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', useBlockProps(),
+      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+        el('strong', {}, 'Soames Title Bar (Large)'),
         el(TextControl, { label: 'Title',          value: props.attributes.title,      onChange: function (v) { props.setAttributes({ title: v }); } }),
         el(TextControl, { label: 'Subtitle',       value: props.attributes.subtitle,   onChange: function (v) { props.setAttributes({ subtitle: v }); } }),
         el(TextControl, { label: 'Background URL', value: props.attributes.background, onChange: function (v) { props.setAttributes({ background: v }); } })
@@ -62,8 +59,9 @@
       css:    { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', useBlockProps(),
-        el('p', {}, 'Enter comma-separated values for each icon item:'),
+      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+        el('strong', {}, 'Soames Icon List'),
+        el('p', { style: { fontSize: '12px', color: '#666' } }, 'Enter comma-separated values for each icon item.'),
         el(TextControl, { label: 'Image URLs (comma-separated)',  value: props.attributes.images, onChange: function (v) { props.setAttributes({ images: v }); } }),
         el(TextControl, { label: 'Labels (comma-separated)',      value: props.attributes.labels, onChange: function (v) { props.setAttributes({ labels: v }); } }),
         el(TextControl, { label: 'Links (comma-separated)',       value: props.attributes.links,  onChange: function (v) { props.setAttributes({ links: v }); } }),
@@ -85,7 +83,8 @@
       css:     { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', useBlockProps(),
+      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+        el('strong', {}, 'Soames Feature'),
         el(TextControl, { label: 'Title',     value: props.attributes.title,   onChange: function (v) { props.setAttributes({ title: v }); } }),
         el(TextControl, { label: 'Content',   value: props.attributes.content, onChange: function (v) { props.setAttributes({ content: v }); } }),
         el(TextControl, { label: 'Image URL', value: props.attributes.image,   onChange: function (v) { props.setAttributes({ image: v }); } }),
@@ -107,8 +106,9 @@
       css:    { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', useBlockProps(),
-        el('p', {}, 'Enter comma-separated values:'),
+      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+        el('strong', {}, 'Soames Gallery Menu'),
+        el('p', { style: { fontSize: '12px', color: '#666' } }, 'Enter comma-separated values.'),
         el(TextControl, { label: 'Image URLs', value: props.attributes.images, onChange: function (v) { props.setAttributes({ images: v }); } }),
         el(TextControl, { label: 'Labels',     value: props.attributes.labels, onChange: function (v) { props.setAttributes({ labels: v }); } }),
         el(TextControl, { label: 'Links',      value: props.attributes.links,  onChange: function (v) { props.setAttributes({ links: v }); } }),
@@ -128,7 +128,8 @@
       title: { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', useBlockProps(),
+      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+        el('strong', {}, 'Soames Video'),
         el(TextControl, { label: 'Video URL', value: props.attributes.link,  onChange: function (v) { props.setAttributes({ link: v }); } }),
         el(TextControl, { label: 'Title',     value: props.attributes.title, onChange: function (v) { props.setAttributes({ title: v }); } })
       );
@@ -149,7 +150,8 @@
       albumName:  { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', useBlockProps(),
+      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+        el('strong', {}, 'Soames SoundCloud'),
         el(TextControl, { label: 'Band Name',   value: props.attributes.bandName,   onChange: function (v) { props.setAttributes({ bandName: v }); } }),
         el(TextControl, { label: 'Site Link',   value: props.attributes.siteLink,   onChange: function (v) { props.setAttributes({ siteLink: v }); } }),
         el(TextControl, { label: 'Playlist ID', value: props.attributes.playlistId, onChange: function (v) { props.setAttributes({ playlistId: v }); } }),
@@ -169,7 +171,8 @@
       content: { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', useBlockProps(),
+      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+        el('strong', {}, 'Soames Text List'),
         el(TextControl, {
           label: 'Content (HTML)',
           value: props.attributes.content,
