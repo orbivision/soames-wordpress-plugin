@@ -124,12 +124,21 @@ function soames_register_feature_block() {
 function soames_register_gallery_menu_block() {
     register_block_type('soames/gallery-menu', [
         'attributes' => [
+            // ORBI-20: grouped rows; each item = { image, label, link, css }
+            'items'  => ['type' => 'array',  'default' => []],
+            // legacy comma fields, kept so pre-ORBI-20 blocks still render
             'images' => ['type' => 'string', 'default' => ''],
             'labels' => ['type' => 'string', 'default' => ''],
             'links'  => ['type' => 'string', 'default' => ''],
             'css'    => ['type' => 'string', 'default' => ''],
         ],
         'render_callback' => function ($attrs) {
+            $items = $attrs['items'] ?? [];
+            if (!empty($items) && is_array($items)) {
+                return '<div class="wp-block-soames-gallery-menu"'
+                    . ' data-items="' . esc_attr(wp_json_encode($items)) . '">'
+                    . '</div>';
+            }
             return '<div class="wp-block-soames-gallery-menu"'
                 . ' data-images="' . esc_attr($attrs['images'] ?? '') . '"'
                 . ' data-labels="' . esc_attr($attrs['labels'] ?? '') . '"'

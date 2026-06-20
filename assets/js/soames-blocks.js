@@ -8,6 +8,97 @@
 
   var CATEGORY = 'soames';
 
+  // Shared grouped-items editor (ORBI-20) for blocks whose items are
+  // { image, label, link, css }. Stores an `items` array; migrates legacy
+  // parallel comma fields (images/labels/links/css) to rows on first edit.
+  // opts: { title, help, itemLabel, addLabel }
+  function groupedItemsEdit(props, opts) {
+    var items = Array.isArray(props.attributes.items) ? props.attributes.items : [];
+    if (items.length === 0 && (props.attributes.images || '').trim().length) {
+      var imgs = props.attributes.images.split(',');
+      var lbls = (props.attributes.labels || '').split(',');
+      var lnks = (props.attributes.links || '').split(',');
+      var clss = (props.attributes.css || '').split(',');
+      items = imgs.map(function (img, i) {
+        return {
+          image: (img || '').trim(),
+          label: (lbls[i] || '').trim(),
+          link:  (lnks[i] || '').trim(),
+          css:   (clss[i] || '').trim()
+        };
+      });
+    }
+
+    // Write items and clear the legacy fields so the server render uses items.
+    function commit(next) {
+      props.setAttributes({ items: next, images: '', labels: '', links: '', css: '' });
+    }
+    function updateField(i, field, value) {
+      commit(items.map(function (it, j) {
+        if (j !== i) return it;
+        var copy = Object.assign({}, it);
+        copy[field] = value;
+        return copy;
+      }));
+    }
+    function addItem() { commit(items.concat([{ image: '', label: '', link: '', css: '' }])); }
+    function removeItem(i) { commit(items.filter(function (_, j) { return j !== i; })); }
+    function move(i, dir) {
+      var j = i + dir;
+      if (j < 0 || j >= items.length) return;
+      var next = items.slice();
+      var tmp = next[i]; next[i] = next[j]; next[j] = tmp;
+      commit(next);
+    }
+
+    var itemLabel = opts.itemLabel || 'Item';
+    var rows = items.map(function (it, i) {
+      return el('div', {
+        key: i,
+        style: { border: '1px solid #e0e0e0', borderRadius: '4px', padding: '12px', marginBottom: '8px', background: '#fff' }
+      },
+        el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' } },
+          el('strong', {}, itemLabel + ' ' + (i + 1)),
+          el('div', {},
+            el(Button, { isSmall: true, icon: 'arrow-up-alt2',   label: 'Move up',   disabled: i === 0,                onClick: function () { move(i, -1); } }),
+            el(Button, { isSmall: true, icon: 'arrow-down-alt2', label: 'Move down', disabled: i === items.length - 1, onClick: function () { move(i, 1); } }),
+            el(Button, { isSmall: true, isDestructive: true, icon: 'trash', label: 'Remove', onClick: function () { removeItem(i); } })
+          )
+        ),
+        el('div', { style: { marginBottom: '8px' } },
+          el(MediaUploadCheck, {},
+            el(MediaUpload, {
+              allowedTypes: ['image'],
+              onSelect: function (media) { updateField(i, 'image', media.url); },
+              render: function (o) {
+                return el('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' } },
+                  it.image
+                    ? el('img', { src: it.image, alt: '', style: { height: '40px', width: '40px', objectFit: 'contain', border: '1px solid #ddd', borderRadius: '4px' } })
+                    : null,
+                  el(Button, { isSecondary: true, onClick: o.open }, it.image ? 'Replace image' : 'Select image'),
+                  it.image
+                    ? el(Button, { isLink: true, isDestructive: true, onClick: function () { updateField(i, 'image', ''); } }, 'Clear')
+                    : null
+                );
+              }
+            })
+          ),
+          el(TextControl, { label: 'Image URL', value: it.image || '', onChange: function (v) { updateField(i, 'image', v); } })
+        ),
+        el(TextControl, { label: 'Label',     value: it.label || '', onChange: function (v) { updateField(i, 'label', v); } }),
+        el(TextControl, { label: 'Link',      value: it.link  || '', onChange: function (v) { updateField(i, 'link',  v); } }),
+        el(TextControl, { label: 'CSS class (optional)', value: it.css || '', onChange: function (v) { updateField(i, 'css', v); } })
+      );
+    });
+
+    return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+      el('strong', {}, opts.title),
+      el('p', { style: { fontSize: '12px', color: '#666', margin: '4px 0 10px' } }, opts.help),
+      rows.length ? rows : el('p', { style: { color: '#888', fontStyle: 'italic' } }, 'Nothing yet — add one below.'),
+      el(Button, { isPrimary: true, icon: 'plus', onClick: addItem }, opts.addLabel || 'Add item')
+    );
+  }
+
   // soames/title-bar
   registerBlockType('soames/title-bar', {
     title: 'Soames Title Bar',
@@ -65,91 +156,12 @@
       css:    { type: 'string', default: '' }
     },
     edit: function (props) {
-      // Prefer the new items array; otherwise derive rows from legacy comma
-      // fields for display (migrated to `items` on the first edit).
-      var items = Array.isArray(props.attributes.items) ? props.attributes.items : [];
-      if (items.length === 0 && (props.attributes.images || '').trim().length) {
-        var imgs = props.attributes.images.split(',');
-        var lbls = (props.attributes.labels || '').split(',');
-        var lnks = (props.attributes.links || '').split(',');
-        var clss = (props.attributes.css || '').split(',');
-        items = imgs.map(function (img, i) {
-          return {
-            image: (img || '').trim(),
-            label: (lbls[i] || '').trim(),
-            link:  (lnks[i] || '').trim(),
-            css:   (clss[i] || '').trim()
-          };
-        });
-      }
-
-      // Write items and clear the legacy fields so the server render uses items.
-      function commit(next) {
-        props.setAttributes({ items: next, images: '', labels: '', links: '', css: '' });
-      }
-      function updateField(i, field, value) {
-        commit(items.map(function (it, j) {
-          if (j !== i) return it;
-          var copy = Object.assign({}, it);
-          copy[field] = value;
-          return copy;
-        }));
-      }
-      function addItem() { commit(items.concat([{ image: '', label: '', link: '', css: '' }])); }
-      function removeItem(i) { commit(items.filter(function (_, j) { return j !== i; })); }
-      function move(i, dir) {
-        var j = i + dir;
-        if (j < 0 || j >= items.length) return;
-        var next = items.slice();
-        var tmp = next[i]; next[i] = next[j]; next[j] = tmp;
-        commit(next);
-      }
-
-      var rows = items.map(function (it, i) {
-        return el('div', {
-          key: i,
-          style: { border: '1px solid #e0e0e0', borderRadius: '4px', padding: '12px', marginBottom: '8px', background: '#fff' }
-        },
-          el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' } },
-            el('strong', {}, 'Icon ' + (i + 1)),
-            el('div', {},
-              el(Button, { isSmall: true, icon: 'arrow-up-alt2',   label: 'Move up',   disabled: i === 0,                onClick: function () { move(i, -1); } }),
-              el(Button, { isSmall: true, icon: 'arrow-down-alt2', label: 'Move down', disabled: i === items.length - 1, onClick: function () { move(i, 1); } }),
-              el(Button, { isSmall: true, isDestructive: true, icon: 'trash', label: 'Remove', onClick: function () { removeItem(i); } })
-            )
-          ),
-          el('div', { style: { marginBottom: '8px' } },
-            el(MediaUploadCheck, {},
-              el(MediaUpload, {
-                allowedTypes: ['image'],
-                onSelect: function (media) { updateField(i, 'image', media.url); },
-                render: function (o) {
-                  return el('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' } },
-                    it.image
-                      ? el('img', { src: it.image, alt: '', style: { height: '40px', width: '40px', objectFit: 'contain', border: '1px solid #ddd', borderRadius: '4px' } })
-                      : null,
-                    el(Button, { isSecondary: true, onClick: o.open }, it.image ? 'Replace image' : 'Select image'),
-                    it.image
-                      ? el(Button, { isLink: true, isDestructive: true, onClick: function () { updateField(i, 'image', ''); } }, 'Clear')
-                      : null
-                  );
-                }
-              })
-            ),
-            el(TextControl, { label: 'Image URL', value: it.image || '', onChange: function (v) { updateField(i, 'image', v); } })
-          ),
-          el(TextControl, { label: 'Label',     value: it.label || '', onChange: function (v) { updateField(i, 'label', v); } }),
-          el(TextControl, { label: 'Link',      value: it.link  || '', onChange: function (v) { updateField(i, 'link',  v); } }),
-          el(TextControl, { label: 'CSS class (optional)', value: it.css || '', onChange: function (v) { updateField(i, 'css', v); } })
-        );
+      return groupedItemsEdit(props, {
+        title: 'Soames Icon List',
+        help: 'Each icon groups its image, label, and link together.',
+        itemLabel: 'Icon',
+        addLabel: 'Add icon'
       });
-
-      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
-        el('strong', {}, 'Soames Icon List'),
-        el('p', { style: { fontSize: '12px', color: '#666', margin: '4px 0 10px' } }, 'Each icon groups its image, label, and link together.'),
-        rows.length ? rows : el('p', { style: { color: '#888', fontStyle: 'italic' } }, 'No icons yet — add one below.'),
-        el(Button, { isPrimary: true, icon: 'plus', onClick: addItem }, 'Add icon')
-      );
     },
     save: function () { return null; }
   });
@@ -177,26 +189,26 @@
     save: function () { return null; }
   });
 
-  // soames/gallery-menu
+  // soames/gallery-menu — grouped repeater (ORBI-20), same shape as icon-list.
   registerBlockType('soames/gallery-menu', {
     title: 'Soames Gallery Menu',
     icon: 'grid-view',
     category: CATEGORY,
     attributes: {
+      items:  { type: 'array',  default: [] },
+      // legacy comma fields, kept so pre-ORBI-20 blocks still read/migrate
       images: { type: 'string', default: '' },
       labels: { type: 'string', default: '' },
       links:  { type: 'string', default: '' },
       css:    { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
-        el('strong', {}, 'Soames Gallery Menu'),
-        el('p', { style: { fontSize: '12px', color: '#666' } }, 'Enter comma-separated values.'),
-        el(TextControl, { label: 'Image URLs', value: props.attributes.images, onChange: function (v) { props.setAttributes({ images: v }); } }),
-        el(TextControl, { label: 'Labels',     value: props.attributes.labels, onChange: function (v) { props.setAttributes({ labels: v }); } }),
-        el(TextControl, { label: 'Links',      value: props.attributes.links,  onChange: function (v) { props.setAttributes({ links: v }); } }),
-        el(TextControl, { label: 'CSS Classes',value: props.attributes.css,    onChange: function (v) { props.setAttributes({ css: v }); } })
-      );
+      return groupedItemsEdit(props, {
+        title: 'Soames Gallery Menu',
+        help: 'Each gallery item groups its image, label, and link together.',
+        itemLabel: 'Item',
+        addLabel: 'Add item'
+      });
     },
     save: function () { return null; }
   });
