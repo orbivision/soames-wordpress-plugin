@@ -28,11 +28,16 @@ function soames_register_blocks() {
 }
 
 function soames_enqueue_block_editor_assets() {
+    // Ensure the media library frame is available for the Icon List image picker.
+    wp_enqueue_media();
+
+    $editor_js = SOAMES_PLUGIN_DIR . 'assets/js/soames-blocks.js';
     wp_enqueue_script(
         'soames-blocks-editor',
         SOAMES_PLUGIN_URL . 'assets/js/soames-blocks.js',
         ['wp-blocks', 'wp-element', 'wp-components', 'wp-block-editor'],
-        '1.0.0',
+        // Version by file mtime so edits bust the browser cache automatically.
+        file_exists($editor_js) ? filemtime($editor_js) : '1.0.0',
         true
     );
 }
@@ -69,12 +74,23 @@ function soames_register_title_bar_lg_block() {
 function soames_register_icon_list_block() {
     register_block_type('soames/icon-list', [
         'attributes' => [
+            // ORBI-20: grouped rows; each item = { image, label, link, css }
+            'items'  => ['type' => 'array',  'default' => []],
+            // legacy comma fields, kept so pre-ORBI-20 blocks still render
             'images' => ['type' => 'string', 'default' => ''],
             'labels' => ['type' => 'string', 'default' => ''],
             'links'  => ['type' => 'string', 'default' => ''],
             'css'    => ['type' => 'string', 'default' => ''],
         ],
         'render_callback' => function ($attrs) {
+            $items = $attrs['items'] ?? [];
+            if (!empty($items) && is_array($items)) {
+                // New format: JSON in data-items (comma-safe).
+                return '<div class="wp-block-soames-icon-list"'
+                    . ' data-items="' . esc_attr(wp_json_encode($items)) . '">'
+                    . '</div>';
+            }
+            // Legacy fallback: positional comma-separated attributes.
             return '<div class="wp-block-soames-icon-list"'
                 . ' data-images="' . esc_attr($attrs['images'] ?? '') . '"'
                 . ' data-labels="' . esc_attr($attrs['labels'] ?? '') . '"'
