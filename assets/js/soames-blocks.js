@@ -5,6 +5,9 @@
   var Button = wp.components.Button;
   var MediaUpload = (wp.blockEditor && wp.blockEditor.MediaUpload) || (wp.editor && wp.editor.MediaUpload);
   var MediaUploadCheck = (wp.blockEditor && wp.blockEditor.MediaUploadCheck) || (wp.editor && wp.editor.MediaUploadCheck);
+  // Block API v3 (ORBI-28): every block's edit() must apply useBlockProps to its
+  // wrapper element, or the iframed editor warns/breaks.
+  var useBlockProps = wp.blockEditor.useBlockProps;
 
   var CATEGORY = 'soames';
 
@@ -91,7 +94,7 @@
       );
     });
 
-    return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+    return el('div', useBlockProps({ style: { padding: '12px', border: '1px solid #ddd' } }),
       el('strong', {}, opts.title),
       el('p', { style: { fontSize: '12px', color: '#666', margin: '4px 0 10px' } }, opts.help),
       rows.length ? rows : el('p', { style: { color: '#888', fontStyle: 'italic' } }, 'Nothing yet — add one below.'),
@@ -101,6 +104,7 @@
 
   // soames/title-bar
   registerBlockType('soames/title-bar', {
+    apiVersion: 3,
     title: 'Soames Title Bar',
     icon: 'heading',
     category: CATEGORY,
@@ -108,7 +112,7 @@
       title: { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+      return el('div', useBlockProps({ style: { padding: '12px', border: '1px solid #ddd' } }),
         el('strong', {}, 'Soames Title Bar'),
         el(TextControl, {
           label: 'Title',
@@ -122,6 +126,7 @@
 
   // soames/title-bar-lg
   registerBlockType('soames/title-bar-lg', {
+    apiVersion: 3,
     title: 'Soames Title Bar (Large)',
     icon: 'cover-image',
     category: CATEGORY,
@@ -131,7 +136,7 @@
       background: { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+      return el('div', useBlockProps({ style: { padding: '12px', border: '1px solid #ddd' } }),
         el('strong', {}, 'Soames Title Bar (Large)'),
         el(TextControl, { label: 'Title',          value: props.attributes.title,      onChange: function (v) { props.setAttributes({ title: v }); } }),
         el(TextControl, { label: 'Subtitle',       value: props.attributes.subtitle,   onChange: function (v) { props.setAttributes({ subtitle: v }); } }),
@@ -144,6 +149,7 @@
   // soames/icon-list — grouped repeater (ORBI-20). Each icon keeps its
   // image/label/link/css together; serialized as an `items` array.
   registerBlockType('soames/icon-list', {
+    apiVersion: 3,
     title: 'Soames Icon List',
     icon: 'list-view',
     category: CATEGORY,
@@ -168,6 +174,7 @@
 
   // soames/feature
   registerBlockType('soames/feature', {
+    apiVersion: 3,
     title: 'Soames Feature',
     icon: 'align-left',
     category: CATEGORY,
@@ -178,7 +185,7 @@
       css:     { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+      return el('div', useBlockProps({ style: { padding: '12px', border: '1px solid #ddd' } }),
         el('strong', {}, 'Soames Feature'),
         el(TextControl, { label: 'Title',     value: props.attributes.title,   onChange: function (v) { props.setAttributes({ title: v }); } }),
         el(TextControl, { label: 'Content',   value: props.attributes.content, onChange: function (v) { props.setAttributes({ content: v }); } }),
@@ -191,6 +198,7 @@
 
   // soames/gallery-menu — grouped repeater (ORBI-20), same shape as icon-list.
   registerBlockType('soames/gallery-menu', {
+    apiVersion: 3,
     title: 'Soames Gallery Menu',
     icon: 'grid-view',
     category: CATEGORY,
@@ -215,6 +223,7 @@
 
   // soames/video
   registerBlockType('soames/video', {
+    apiVersion: 3,
     title: 'Soames Video',
     icon: 'video-alt3',
     category: CATEGORY,
@@ -223,7 +232,7 @@
       title: { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+      return el('div', useBlockProps({ style: { padding: '12px', border: '1px solid #ddd' } }),
         el('strong', {}, 'Soames Video'),
         el(TextControl, { label: 'Video URL', value: props.attributes.link,  onChange: function (v) { props.setAttributes({ link: v }); } }),
         el(TextControl, { label: 'Title',     value: props.attributes.title, onChange: function (v) { props.setAttributes({ title: v }); } })
@@ -234,6 +243,7 @@
 
   // soames/soundcloud
   registerBlockType('soames/soundcloud', {
+    apiVersion: 3,
     title: 'Soames SoundCloud',
     icon: 'format-audio',
     category: CATEGORY,
@@ -245,7 +255,7 @@
       albumName:  { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+      return el('div', useBlockProps({ style: { padding: '12px', border: '1px solid #ddd' } }),
         el('strong', {}, 'Soames SoundCloud'),
         el(TextControl, { label: 'Band Name',   value: props.attributes.bandName,   onChange: function (v) { props.setAttributes({ bandName: v }); } }),
         el(TextControl, { label: 'Site Link',   value: props.attributes.siteLink,   onChange: function (v) { props.setAttributes({ siteLink: v }); } }),
@@ -259,6 +269,7 @@
 
   // soames/text-list
   registerBlockType('soames/text-list', {
+    apiVersion: 3,
     title: 'Soames Text List',
     icon: 'editor-ul',
     category: CATEGORY,
@@ -266,7 +277,7 @@
       content: { type: 'string', default: '' }
     },
     edit: function (props) {
-      return el('div', { style: { padding: '12px', border: '1px solid #ddd' } },
+      return el('div', useBlockProps({ style: { padding: '12px', border: '1px solid #ddd' } }),
         el('strong', {}, 'Soames Text List'),
         el(TextControl, {
           label: 'Content (HTML)',
