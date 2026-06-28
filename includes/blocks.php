@@ -44,6 +44,7 @@ function soames_enqueue_block_editor_assets() {
 
 function soames_register_title_bar_block() {
     register_block_type('soames/title-bar', [
+        'api_version' => 3,
         'attributes' => [
             'title' => ['type' => 'string', 'default' => ''],
         ],
@@ -56,6 +57,7 @@ function soames_register_title_bar_block() {
 
 function soames_register_title_bar_lg_block() {
     register_block_type('soames/title-bar-lg', [
+        'api_version' => 3,
         'attributes' => [
             'title'      => ['type' => 'string', 'default' => ''],
             'subtitle'   => ['type' => 'string', 'default' => ''],
@@ -73,6 +75,7 @@ function soames_register_title_bar_lg_block() {
 
 function soames_register_icon_list_block() {
     register_block_type('soames/icon-list', [
+        'api_version' => 3,
         'attributes' => [
             // ORBI-20: grouped rows; each item = { image, label, link, css }
             'items'  => ['type' => 'array',  'default' => []],
@@ -103,6 +106,7 @@ function soames_register_icon_list_block() {
 
 function soames_register_feature_block() {
     register_block_type('soames/feature', [
+        'api_version' => 3,
         'attributes' => [
             'content' => ['type' => 'string', 'default' => ''],
             'image'   => ['type' => 'string', 'default' => ''],
@@ -123,6 +127,7 @@ function soames_register_feature_block() {
 
 function soames_register_gallery_menu_block() {
     register_block_type('soames/gallery-menu', [
+        'api_version' => 3,
         'attributes' => [
             // ORBI-20: grouped rows; each item = { image, label, link, css }
             'items'  => ['type' => 'array',  'default' => []],
@@ -151,6 +156,7 @@ function soames_register_gallery_menu_block() {
 
 function soames_register_video_block() {
     register_block_type('soames/video', [
+        'api_version' => 3,
         'attributes' => [
             'link'  => ['type' => 'string', 'default' => ''],
             'title' => ['type' => 'string', 'default' => ''],
@@ -166,6 +172,7 @@ function soames_register_video_block() {
 
 function soames_register_soundcloud_block() {
     register_block_type('soames/soundcloud', [
+        'api_version' => 3,
         'attributes' => [
             'bandName'   => ['type' => 'string', 'default' => ''],
             'siteLink'   => ['type' => 'string', 'default' => ''],
@@ -187,6 +194,7 @@ function soames_register_soundcloud_block() {
 
 function soames_register_text_list_block() {
     register_block_type('soames/text-list', [
+        'api_version' => 3,
         'attributes' => [
             'content' => ['type' => 'string', 'default' => ''],
         ],
