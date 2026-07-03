@@ -56,6 +56,11 @@ function soames_register_settings() {
         'sanitize_callback' => 'soames_sanitize_frontend_url',
         'default'           => '',
     ] );
+    register_setting( 'soames_options', 'soames_docs_page_id', [
+        'type'              => 'integer',
+        'sanitize_callback' => 'absint',
+        'default'           => 0,
+    ] );
     register_setting( 'soames_assets_options', 'soames_logo_id', [
         'type'              => 'integer',
         'sanitize_callback' => 'absint',
@@ -131,6 +136,27 @@ function soames_settings_page() {
                         />
                         <p class="description">
                             Direct visits to this WordPress installation will be redirected to this URL.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="soames_docs_page_id">Documentation page</label>
+                    </th>
+                    <td>
+                        <?php
+                        wp_dropdown_pages( [
+                            'name'              => 'soames_docs_page_id',
+                            'id'                => 'soames_docs_page_id',
+                            'selected'          => (int) get_option( 'soames_docs_page_id' ),
+                            'show_option_none'  => '— None —',
+                            'option_none_value' => 0,
+                        ] );
+                        ?>
+                        <p class="description">
+                            Sets the hero header (title, subhead, background image, overlay)
+                            for the <code>/docs/</code> landing page. Leave as “— None —” to
+                            use the default “Documentation” hero.
                         </p>
                     </td>
                 </tr>
