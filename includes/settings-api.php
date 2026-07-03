@@ -19,6 +19,7 @@ function soames_plugin_rest_settings() {
     $favicon_id   = (int) get_option( 'soames_favicon_id' );
     $blurb        = get_option( 'soames_contact_blurb', '' );
     $company_name = get_option( 'soames_company_name', '' );
+    $docs_page_id = (int) get_option( 'soames_docs_page_id' );
 
     return [
         'logoUrl'         => $logo_id    ? wp_get_attachment_url( $logo_id )                                    : null,
@@ -27,5 +28,8 @@ function soames_plugin_rest_settings() {
         'contactBlurb'    => $blurb !== '' ? $blurb                                                              : null,
         'companyName'     => $company_name !== '' ? $company_name                                                : null,
         'showCompanyName' => (bool) get_option( 'soames_show_company_name', 1 ),
+        // The page chosen in Soames Settings → Documentation page; drives the
+        // /docs/ landing hero. null when unset (theme falls back to defaults).
+        'docsPageId'      => $docs_page_id ?: null,
     ];
 }
