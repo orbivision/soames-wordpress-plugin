@@ -61,6 +61,11 @@ function soames_register_settings() {
         'sanitize_callback' => 'absint',
         'default'           => 0,
     ] );
+    register_setting( 'soames_options', 'soames_build_hook_url', [
+        'type'              => 'string',
+        'sanitize_callback' => 'esc_url_raw',
+        'default'           => '',
+    ] );
     register_setting( 'soames_assets_options', 'soames_logo_id', [
         'type'              => 'integer',
         'sanitize_callback' => 'absint',
@@ -160,8 +165,37 @@ function soames_settings_page() {
                         </p>
                     </td>
                 </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="soames_build_hook_url">Netlify build hook URL</label>
+                    </th>
+                    <td>
+                        <input
+                            type="url"
+                            id="soames_build_hook_url"
+                            name="soames_build_hook_url"
+                            value="<?php echo esc_attr( get_option( 'soames_build_hook_url' ) ); ?>"
+                            class="regular-text"
+                            placeholder="https://api.netlify.com/build_hooks/…"
+                        />
+                        <p class="description">
+                            When set, publishing or updating content automatically rebuilds
+                            the site (the change goes live about a minute after you publish).
+                            Create a build hook in Netlify → Site configuration → Build &amp; deploy → Build hooks.
+                        </p>
+                    </td>
+                </tr>
             </table>
             <?php submit_button(); ?>
+        </form>
+
+        <hr />
+        <h2>Manual deploy</h2>
+        <p>Rebuild the site now — useful after changing menus or Site Assets, which don’t trigger an automatic build.</p>
+        <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+            <input type="hidden" name="action" value="soames_deploy_now" />
+            <?php wp_nonce_field( 'soames_deploy_now' ); ?>
+            <?php submit_button( 'Deploy now', 'secondary', 'submit', false ); ?>
         </form>
     </div>
     <?php
