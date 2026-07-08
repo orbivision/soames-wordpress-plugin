@@ -36,7 +36,7 @@ add_action( 'init', function () {
 		'new_item'           => 'New Article',
 		'edit_item'          => 'Edit Article',
 		'view_item'          => 'View Article',
-		'all_items'          => 'All Articles',
+		'all_items'          => 'Knowledge Base',
 		'search_items'       => 'Search Articles',
 		'parent_item_colon'  => 'Parent Article:',
 		'not_found'          => 'No articles found.',

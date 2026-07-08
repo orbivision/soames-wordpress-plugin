@@ -32,6 +32,24 @@ add_action( 'admin_menu', function () {
     );
 } );
 
+// ── Force the Soames submenu into a deliberate (non-alphabetical) order ────────
+// The Knowledge Base CPT submenu is injected by core (wp-admin/menu.php) before
+// our admin_menu callback runs, so registration order alone can't place it last.
+// Re-sort at a late priority once every item is present. $submenu entries are
+// array( title, cap, slug, ... ), so the slug lives at index [2].
+add_action( 'admin_menu', function () {
+    global $submenu;
+    if ( empty( $submenu['soames-settings'] ) ) return;
+    $order = array( 'soames-settings', 'soames-site-assets', 'edit.php?post_type=docs' );
+    usort( $submenu['soames-settings'], function ( $a, $b ) use ( $order ) {
+        $ia = array_search( $a[2], $order, true );
+        $ib = array_search( $b[2], $order, true );
+        $ia = ( false === $ia ) ? PHP_INT_MAX : $ia;
+        $ib = ( false === $ib ) ? PHP_INT_MAX : $ib;
+        return $ia - $ib;
+    } );
+}, 999 );
+
 // ── Enqueue media picker on the Site Assets page ──────────────────────────────
 
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
