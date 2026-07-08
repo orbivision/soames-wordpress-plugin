@@ -1,10 +1,10 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
-// REST endpoint consumed by gatsby-node.js sourceNodes at build time.
-// gatsby-source-wordpress does not surface custom WPGraphQL fields on
-// GeneralSettings, so we expose Soames settings via a dedicated REST route.
-// Gatsby's sourceNodes fetches this and creates a SoamesSettings node.
+// REST endpoint the Soames Astro theme fetches at build time via
+// getSoamesSettings() (src/lib/wp.ts → /wp-json/soames/v1/settings).
+// WPGraphQL does not surface these custom Soames settings fields on
+// GeneralSettings, so we expose them through a dedicated REST route.
 
 add_action( 'rest_api_init', function () {
     register_rest_route( 'soames/v1', '/settings', [
