@@ -28,7 +28,7 @@ function soames_plugin_rest_settings() {
         'contactBlurb'    => $blurb !== '' ? $blurb                                                              : null,
         'companyName'     => $company_name !== '' ? $company_name                                                : null,
         'showCompanyName' => (bool) get_option( 'soames_show_company_name', 1 ),
-        // The page chosen in Soames Settings → Documentation page; drives the
+        // The page chosen in Soames Settings → Knowledge Base page; drives the
         // /docs/ landing hero. null when unset (theme falls back to defaults).
         'docsPageId'      => $docs_page_id ?: null,
     ];

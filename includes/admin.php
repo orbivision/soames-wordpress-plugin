@@ -146,7 +146,7 @@ function soames_settings_page() {
                 </tr>
                 <tr>
                     <th scope="row">
-                        <label for="soames_docs_page_id">Documentation page</label>
+                        <label for="soames_docs_page_id">Knowledge Base page</label>
                     </th>
                     <td>
                         <?php
@@ -161,7 +161,7 @@ function soames_settings_page() {
                         <p class="description">
                             Sets the hero header (title, subhead, background image, overlay)
                             for the <code>/docs/</code> landing page. Leave as “— None —” to
-                            use the default “Documentation” hero.
+                            use the default “Knowledge Base” hero.
                         </p>
                     </td>
                 </tr>
