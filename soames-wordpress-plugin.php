@@ -27,3 +27,4 @@ require_once SOAMES_PLUGIN_DIR . 'includes/settings-api.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/build-hook.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/blocks.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/docs-cpt.php';
+require_once SOAMES_PLUGIN_DIR . 'includes/docs-ordering.php';
