@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Soames
  * Plugin URI:  https://soames.app
- * Description: Site configuration, preview support, media assets, and WPGraphQL extensions for the Soames Gatsby theme.
+ * Description: Site configuration, preview support, media assets, and WPGraphQL extensions for the Soames Astro theme.
  * Version:     1.0.0
  * Requires PHP: 7.4
  * Author:      Orbi Software
