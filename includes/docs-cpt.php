@@ -14,6 +14,11 @@
  * theme's getDocs() already queries. Uses the `docs` slug so documentation
  * authored previously (including under weDocs) is preserved and editable.
  *
+ * NAMING (ORBI-36): the human-facing labels read "Knowledge Base" / "Article",
+ * but the post-type key stays `docs`, the rewrite slug stays `/docs/`, and the
+ * GraphQL names stay Document / Documents — all for back-compat with existing
+ * content and the Astro theme's getDocs(). Only the labels are cosmetic.
+ *
  * NOTE: do not run this alongside weDocs — both register the `docs` post type
  * and would collide. weDocs should be deactivated/removed.
  */
@@ -22,20 +27,20 @@ defined( 'ABSPATH' ) || exit;
 
 add_action( 'init', function () {
 	$labels = array(
-		'name'               => 'Documentation',
-		'singular_name'      => 'Document',
-		'menu_name'          => 'Documentation',
-		'name_admin_bar'     => 'Document',
+		'name'               => 'Knowledge Base',
+		'singular_name'      => 'Article',
+		'menu_name'          => 'Knowledge Base',
+		'name_admin_bar'     => 'Article',
 		'add_new'            => 'Add New',
-		'add_new_item'       => 'Add New Document',
-		'new_item'           => 'New Document',
-		'edit_item'          => 'Edit Document',
-		'view_item'          => 'View Document',
-		'all_items'          => 'All Documents',
-		'search_items'       => 'Search Documents',
-		'parent_item_colon'  => 'Parent Document:',
-		'not_found'          => 'No documents found.',
-		'not_found_in_trash' => 'No documents found in Trash.',
+		'add_new_item'       => 'Add New Article',
+		'new_item'           => 'New Article',
+		'edit_item'          => 'Edit Article',
+		'view_item'          => 'View Article',
+		'all_items'          => 'Knowledge Base',
+		'search_items'       => 'Search Articles',
+		'parent_item_colon'  => 'Parent Article:',
+		'not_found'          => 'No articles found.',
+		'not_found_in_trash' => 'No articles found in Trash.',
 	);
 
 	register_post_type( 'docs', array(
@@ -43,7 +48,7 @@ add_action( 'init', function () {
 		'public'              => true,
 		'hierarchical'        => true, // parent/child nesting for the docs tree
 		'show_ui'             => true,
-		'show_in_menu'        => true,
+		'show_in_menu'        => 'soames-settings', // nest under the Soames admin menu
 		'show_in_nav_menus'   => true,
 		'show_in_rest'        => true, // use the block editor
 		'menu_position'       => 20,
