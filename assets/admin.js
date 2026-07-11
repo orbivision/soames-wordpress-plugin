@@ -12,6 +12,8 @@ jQuery(function ($) {
             var attachment = frame.state().get('selection').first().toJSON();
             $('#' + target + '_id').val(attachment.id);
             $('#' + target + '_preview').attr('src', attachment.url).show();
+            // Reveal the matching Remove button (may start hidden when unset).
+            $('.soames-media-clear[data-target="' + target + '"]').show();
         });
         frame.open();
     });
@@ -22,5 +24,6 @@ jQuery(function ($) {
         var target = $(this).data('target');
         $('#' + target + '_id').val('');
         $('#' + target + '_preview').attr('src', '').hide();
+        $(this).hide();
     });
 });
