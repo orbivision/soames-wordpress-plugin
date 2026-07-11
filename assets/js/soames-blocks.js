@@ -2,6 +2,7 @@
   var registerBlockType = wp.blocks.registerBlockType;
   var el = wp.element.createElement;
   var TextControl = wp.components.TextControl;
+  var TextareaControl = wp.components.TextareaControl;
   var Button = wp.components.Button;
   var MediaUpload = (wp.blockEditor && wp.blockEditor.MediaUpload) || (wp.editor && wp.editor.MediaUpload);
   var MediaUploadCheck = (wp.blockEditor && wp.blockEditor.MediaUploadCheck) || (wp.editor && wp.editor.MediaUploadCheck);
@@ -99,6 +100,66 @@
       el('p', { style: { fontSize: '12px', color: '#666', margin: '4px 0 10px' } }, opts.help),
       rows.length ? rows : el('p', { style: { color: '#888', fontStyle: 'italic' } }, 'Nothing yet — add one below.'),
       el(Button, { isPrimary: true, icon: 'plus', onClick: addItem }, opts.addLabel || 'Add item')
+    );
+  }
+
+  // Text-list repeater (ORBI-42): one HTML chunk per list item. Each item is
+  // { content }. The theme wraps items in <ul><li>… and applies bullets +
+  // top/bottom spacing via CSS — no manual <ul>/<li> or <br><br> needed. A legacy
+  // single `content` string is migrated into one item on first edit.
+  function textItemsEdit(props) {
+    var items = Array.isArray(props.attributes.items) ? props.attributes.items : [];
+    if (items.length === 0 && (props.attributes.content || '').trim().length) {
+      items = [{ content: props.attributes.content }];
+    }
+
+    // Write items and clear the legacy field so the server render uses items.
+    function commit(next) { props.setAttributes({ items: next, content: '' }); }
+    function updateContent(i, value) {
+      commit(items.map(function (it, j) {
+        if (j !== i) return it;
+        var copy = Object.assign({}, it);
+        copy.content = value;
+        return copy;
+      }));
+    }
+    function addItem() { commit(items.concat([{ content: '' }])); }
+    function removeItem(i) { commit(items.filter(function (_, j) { return j !== i; })); }
+    function move(i, dir) {
+      var j = i + dir;
+      if (j < 0 || j >= items.length) return;
+      var next = items.slice();
+      var tmp = next[i]; next[i] = next[j]; next[j] = tmp;
+      commit(next);
+    }
+
+    var rows = items.map(function (it, i) {
+      return el('div', {
+        key: i,
+        style: { border: '1px solid #e0e0e0', borderRadius: '4px', padding: '12px', marginBottom: '8px', background: '#fff' }
+      },
+        el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' } },
+          el('strong', {}, 'Section ' + (i + 1)),
+          el('div', {},
+            el(Button, { isSmall: true, icon: 'arrow-up-alt2',   label: 'Move up',   disabled: i === 0,                onClick: function () { move(i, -1); } }),
+            el(Button, { isSmall: true, icon: 'arrow-down-alt2', label: 'Move down', disabled: i === items.length - 1, onClick: function () { move(i, 1); } }),
+            el(Button, { isSmall: true, isDestructive: true, icon: 'trash', label: 'Remove', onClick: function () { removeItem(i); } })
+          )
+        ),
+        el(TextareaControl, {
+          label: 'Content (HTML)',
+          value: it.content || '',
+          rows: 6,
+          onChange: function (v) { updateContent(i, v); }
+        })
+      );
+    });
+
+    return el('div', useBlockProps({ style: { padding: '12px', border: '1px solid #ddd' } }),
+      el('strong', {}, 'Soames Text List'),
+      el('p', { style: { fontSize: '12px', color: '#666', margin: '4px 0 10px' } }, 'Add a section per list item. Each takes HTML; bullets and top/bottom spacing are applied automatically.'),
+      rows.length ? rows : el('p', { style: { color: '#888', fontStyle: 'italic' } }, 'Nothing yet — add one below.'),
+      el(Button, { isPrimary: true, icon: 'plus', onClick: addItem }, 'Add section')
     );
   }
 
@@ -267,25 +328,19 @@
     save: function () { return null; }
   });
 
-  // soames/text-list
+  // soames/text-list — grouped repeater (ORBI-42). Each list item holds an HTML
+  // chunk; serialized as an `items` array. Legacy single `content` string kept so
+  // pre-ORBI-42 blocks still read/migrate.
   registerBlockType('soames/text-list', {
     apiVersion: 3,
     title: 'Soames Text List',
     icon: 'editor-ul',
     category: CATEGORY,
     attributes: {
+      items:   { type: 'array',  default: [] },
       content: { type: 'string', default: '' }
     },
-    edit: function (props) {
-      return el('div', useBlockProps({ style: { padding: '12px', border: '1px solid #ddd' } }),
-        el('strong', {}, 'Soames Text List'),
-        el(TextControl, {
-          label: 'Content (HTML)',
-          value: props.attributes.content,
-          onChange: function (v) { props.setAttributes({ content: v }); }
-        })
-      );
-    },
+    edit: function (props) { return textItemsEdit(props); },
     save: function () { return null; }
   });
 

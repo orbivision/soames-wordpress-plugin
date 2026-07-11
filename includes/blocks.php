@@ -196,9 +196,25 @@ function soames_register_text_list_block() {
     register_block_type('soames/text-list', [
         'api_version' => 3,
         'attributes' => [
+            // ORBI-42: grouped list items; each item = { content } (HTML chunk).
+            'items'   => ['type' => 'array',  'default' => []],
+            // legacy single HTML string, kept so pre-ORBI-42 blocks still render
             'content' => ['type' => 'string', 'default' => ''],
         ],
         'render_callback' => function ($attrs) {
+            $items = $attrs['items'] ?? [];
+            if (!empty($items) && is_array($items)) {
+                // New format: JSON in data-items (comma-safe). Sanitize each
+                // item's HTML before encoding; the theme wraps them in <ul><li>.
+                $clean = array_map(function ($it) {
+                    $html = (is_array($it) && isset($it['content'])) ? $it['content'] : '';
+                    return ['content' => wp_kses_post($html)];
+                }, $items);
+                return '<div class="wp-block-soames-text-list"'
+                    . ' data-items="' . esc_attr(wp_json_encode($clean)) . '">'
+                    . '</div>';
+            }
+            // Legacy fallback: raw HTML content.
             $content = wp_kses_post($attrs['content'] ?? '');
             return '<div class="wp-block-soames-text-list">' . $content . '</div>';
         },
