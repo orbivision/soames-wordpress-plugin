@@ -246,12 +246,37 @@
       css:     { type: 'string', default: '' }
     },
     edit: function (props) {
+      var image = props.attributes.image || '';
       return el('div', useBlockProps({ style: { padding: '12px', border: '1px solid #ddd' } }),
         el('strong', {}, 'Soames Feature'),
-        el(TextControl, { label: 'Title',     value: props.attributes.title,   onChange: function (v) { props.setAttributes({ title: v }); } }),
-        el(TextControl, { label: 'Content',   value: props.attributes.content, onChange: function (v) { props.setAttributes({ content: v }); } }),
-        el(TextControl, { label: 'Image URL', value: props.attributes.image,   onChange: function (v) { props.setAttributes({ image: v }); } }),
-        el(TextControl, { label: 'CSS Class', value: props.attributes.css,     onChange: function (v) { props.setAttributes({ css: v }); } })
+        el(TextControl, { label: 'Title', value: props.attributes.title, onChange: function (v) { props.setAttributes({ title: v }); } }),
+        el(TextareaControl, {
+          label: 'Content (HTML)',
+          value: props.attributes.content,
+          rows: 8,
+          onChange: function (v) { props.setAttributes({ content: v }); }
+        }),
+        el('div', { style: { marginBottom: '8px' } },
+          el(MediaUploadCheck, {},
+            el(MediaUpload, {
+              allowedTypes: ['image'],
+              onSelect: function (media) { props.setAttributes({ image: media.url }); },
+              render: function (o) {
+                return el('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' } },
+                  image
+                    ? el('img', { src: image, alt: '', style: { height: '40px', width: '40px', objectFit: 'contain', border: '1px solid #ddd', borderRadius: '4px' } })
+                    : null,
+                  el(Button, { isSecondary: true, onClick: o.open }, image ? 'Replace image' : 'Select image'),
+                  image
+                    ? el(Button, { isLink: true, isDestructive: true, onClick: function () { props.setAttributes({ image: '' }); } }, 'Clear')
+                    : null
+                );
+              }
+            })
+          ),
+          el(TextControl, { label: 'Image URL', value: image, onChange: function (v) { props.setAttributes({ image: v }); } })
+        ),
+        el(TextControl, { label: 'CSS Class', value: props.attributes.css, onChange: function (v) { props.setAttributes({ css: v }); } })
       );
     },
     save: function () { return null; }
