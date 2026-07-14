@@ -131,6 +131,8 @@ function soames_register_gallery_menu_block() {
         'attributes' => [
             // ORBI-20: grouped rows; each item = { image, label, link, css }
             'items'  => ['type' => 'array',  'default' => []],
+            // ORBI-44: 'standard' (3 per row) or 'compact' (4 per row)
+            'layout' => ['type' => 'string', 'default' => 'standard'],
             // legacy comma fields, kept so pre-ORBI-20 blocks still render
             'images' => ['type' => 'string', 'default' => ''],
             'labels' => ['type' => 'string', 'default' => ''],
@@ -138,13 +140,16 @@ function soames_register_gallery_menu_block() {
             'css'    => ['type' => 'string', 'default' => ''],
         ],
         'render_callback' => function ($attrs) {
+            $layout = $attrs['layout'] ?? 'standard';
             $items = $attrs['items'] ?? [];
             if (!empty($items) && is_array($items)) {
                 return '<div class="wp-block-soames-gallery-menu"'
+                    . ' data-layout="' . esc_attr($layout) . '"'
                     . ' data-items="' . esc_attr(wp_json_encode($items)) . '">'
                     . '</div>';
             }
             return '<div class="wp-block-soames-gallery-menu"'
+                . ' data-layout="' . esc_attr($layout) . '"'
                 . ' data-images="' . esc_attr($attrs['images'] ?? '') . '"'
                 . ' data-labels="' . esc_attr($attrs['labels'] ?? '') . '"'
                 . ' data-links="'  . esc_attr($attrs['links']  ?? '') . '"'

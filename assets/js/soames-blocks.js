@@ -1,9 +1,13 @@
 (function () {
   var registerBlockType = wp.blocks.registerBlockType;
   var el = wp.element.createElement;
+  var Fragment = wp.element.Fragment;
   var TextControl = wp.components.TextControl;
   var TextareaControl = wp.components.TextareaControl;
+  var SelectControl = wp.components.SelectControl;
+  var PanelBody = wp.components.PanelBody;
   var Button = wp.components.Button;
+  var InspectorControls = wp.blockEditor.InspectorControls;
   var MediaUpload = (wp.blockEditor && wp.blockEditor.MediaUpload) || (wp.editor && wp.editor.MediaUpload);
   var MediaUploadCheck = (wp.blockEditor && wp.blockEditor.MediaUploadCheck) || (wp.editor && wp.editor.MediaUploadCheck);
   // Block API v3 (ORBI-28): every block's edit() must apply useBlockProps to its
@@ -290,6 +294,8 @@
     category: CATEGORY,
     attributes: {
       items:  { type: 'array',  default: [] },
+      // ORBI-44: 'standard' (3 per row) or 'compact' (4 per row)
+      layout: { type: 'string', default: 'standard' },
       // legacy comma fields, kept so pre-ORBI-20 blocks still read/migrate
       images: { type: 'string', default: '' },
       labels: { type: 'string', default: '' },
@@ -297,12 +303,28 @@
       css:    { type: 'string', default: '' }
     },
     edit: function (props) {
-      return groupedItemsEdit(props, {
-        title: 'Soames Gallery Menu',
-        help: 'Each gallery item groups its image, label, and link together.',
-        itemLabel: 'Item',
-        addLabel: 'Add item'
-      });
+      var layout = props.attributes.layout || 'standard';
+      return el(Fragment, {},
+        el(InspectorControls, {},
+          el(PanelBody, { title: 'Layout', initialOpen: true },
+            el(SelectControl, {
+              label: 'View',
+              value: layout,
+              options: [
+                { label: 'Standard (3 per row)', value: 'standard' },
+                { label: 'Compact (4 per row)',  value: 'compact' }
+              ],
+              onChange: function (v) { props.setAttributes({ layout: v }); }
+            })
+          )
+        ),
+        groupedItemsEdit(props, {
+          title: 'Soames Gallery Menu',
+          help: 'Each gallery item groups its image, label, and link together.',
+          itemLabel: 'Item',
+          addLabel: 'Add item'
+        })
+      );
     },
     save: function () { return null; }
   });
