@@ -3,6 +3,18 @@ defined( 'ABSPATH' ) || exit;
 
 // ── Admin menu ────────────────────────────────────────────────────────────────
 
+// Monochrome Soames brand mark for the top-level menu icon. Passed as a base64
+// data-URI so it renders on its own (light gray, like a native icon); the scoped
+// CSS in soames_admin_menu_icon_css() then masks it with currentColor so it adopts
+// the menu's hover/current colors across admin color schemes.
+function soames_admin_menu_icon_uri() {
+    $svg = @file_get_contents( SOAMES_PLUGIN_DIR . 'assets/soames-mark-mono.svg' );
+    if ( ! $svg ) {
+        return 'dashicons-admin-site-alt3'; // fall back to the old globe if unreadable
+    }
+    return 'data:image/svg+xml;base64,' . base64_encode( $svg );
+}
+
 add_action( 'admin_menu', function () {
     add_menu_page(
         'Soames Settings',
@@ -10,7 +22,7 @@ add_action( 'admin_menu', function () {
         'manage_options',
         'soames-settings',
         'soames_settings_page',
-        'dashicons-admin-site-alt3',
+        soames_admin_menu_icon_uri(),
         60
     );
     // Override the auto-generated duplicate submenu title ("Soames" → "Settings").
@@ -49,6 +61,36 @@ add_action( 'admin_menu', function () {
         return $ia - $ib;
     } );
 }, 999 );
+
+// ── Recolor the Soames menu icon to match the admin scheme ────────────────────
+// WP renders a data-URI SVG icon as a fixed-color background image. To make it
+// behave like a native icon (gray at rest, white/blue on hover & current), hide
+// that background and paint an ::before whose color WP already drives per-scheme,
+// masked to the mark's shape. Scoped to the Soames menu id so nothing else changes.
+add_action( 'admin_head', function () {
+    $uri = soames_admin_menu_icon_uri();
+    if ( 0 !== strpos( $uri, 'data:image/svg+xml' ) ) {
+        return; // fell back to a dashicon; nothing to mask
+    }
+    $mask = "url('" . esc_attr( $uri ) . "') no-repeat center / 20px 20px";
+    ?>
+    <style id="soames-admin-menu-icon">
+    #adminmenu #toplevel_page_soames-settings .wp-menu-image {
+        background-image: none !important;
+    }
+    #adminmenu #toplevel_page_soames-settings .wp-menu-image::before {
+        content: "";
+        display: block;
+        width: 20px;
+        height: 20px;
+        margin: 7px auto 0;
+        background-color: currentColor;
+        -webkit-mask: <?php echo $mask; ?>;
+                mask: <?php echo $mask; ?>;
+    }
+    </style>
+    <?php
+} );
 
 // ── Enqueue media picker on the Site Assets page ──────────────────────────────
 

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Monochrome Soames mark: solid disc with the S knocked out via a mask.
+       Filled #a7aaad so the raw file works as a data-URI fallback; when used as a
+       CSS mask (admin.php) the alpha channel is what matters and the color comes
+       from the menu's currentColor. -->
+  <mask id="soames-s">
+    <rect width="512" height="512" fill="#fff"/>
+    <path d="M 408 196 A 160 160 0 0 0 104 196 L 408 316 A 160 160 0 0 1 104 316"
+          fill="none" stroke="#000" stroke-width="46"
+          stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10"/>
+  </mask>
+  <circle cx="256" cy="256" r="238" fill="#a7aaad" mask="url(#soames-s)"/>
+</svg>
