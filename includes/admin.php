@@ -81,9 +81,10 @@ add_action( 'admin_head', function () {
     #adminmenu #toplevel_page_soames-settings .wp-menu-image::before {
         content: "";
         display: block;
-        width: 20px;
-        height: 20px;
-        margin: 7px auto 0;
+        width: 100%;   /* fill the 36x34 icon box; the mask centers the 20px mark  */
+        height: 100%;  /* so it lands on the same center as native dashicons       */
+        padding: 0;    /* cancel WP's inherited div.wp-menu-image:before padding    */
+        margin: 0;
         background-color: currentColor;
         -webkit-mask: <?php echo $mask; ?>;
                 mask: <?php echo $mask; ?>;
