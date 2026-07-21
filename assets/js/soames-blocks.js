@@ -67,10 +67,13 @@
       },
         el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' } },
           el('strong', {}, itemLabel + ' ' + (i + 1)),
+          // ORBI-49: text labels, not icon-only Buttons. The v3 editor renders in
+          // an iframe that does NOT load the Dashicons stylesheet, so `icon:`-only
+          // buttons showed as invisible empty boxes (reorder/remove appeared missing).
           el('div', {},
-            el(Button, { isSmall: true, icon: 'arrow-up-alt2',   label: 'Move up',   disabled: i === 0,                onClick: function () { move(i, -1); } }),
-            el(Button, { isSmall: true, icon: 'arrow-down-alt2', label: 'Move down', disabled: i === items.length - 1, onClick: function () { move(i, 1); } }),
-            el(Button, { isSmall: true, isDestructive: true, icon: 'trash', label: 'Remove', onClick: function () { removeItem(i); } })
+            el(Button, { isSmall: true, variant: 'secondary', disabled: i === 0,                onClick: function () { move(i, -1); } }, 'Move up'),
+            el(Button, { isSmall: true, variant: 'secondary', disabled: i === items.length - 1, onClick: function () { move(i, 1); } }, 'Move down'),
+            el(Button, { isSmall: true, variant: 'secondary', isDestructive: true,               onClick: function () { removeItem(i); } }, 'Remove')
           )
         ),
         el('div', { style: { marginBottom: '8px' } },
@@ -144,10 +147,11 @@
       },
         el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' } },
           el('strong', {}, 'Section ' + (i + 1)),
+          // ORBI-49: text labels (see groupedItemsEdit note — iframe lacks Dashicons).
           el('div', {},
-            el(Button, { isSmall: true, icon: 'arrow-up-alt2',   label: 'Move up',   disabled: i === 0,                onClick: function () { move(i, -1); } }),
-            el(Button, { isSmall: true, icon: 'arrow-down-alt2', label: 'Move down', disabled: i === items.length - 1, onClick: function () { move(i, 1); } }),
-            el(Button, { isSmall: true, isDestructive: true, icon: 'trash', label: 'Remove', onClick: function () { removeItem(i); } })
+            el(Button, { isSmall: true, variant: 'secondary', disabled: i === 0,                onClick: function () { move(i, -1); } }, 'Move up'),
+            el(Button, { isSmall: true, variant: 'secondary', disabled: i === items.length - 1, onClick: function () { move(i, 1); } }, 'Move down'),
+            el(Button, { isSmall: true, variant: 'secondary', isDestructive: true,               onClick: function () { removeItem(i); } }, 'Remove')
           )
         ),
         el(TextareaControl, {
@@ -220,6 +224,8 @@
     category: CATEGORY,
     attributes: {
       items:  { type: 'array',  default: [] },
+      // ORBI-49: icon image height — 'small' (116px) | 'medium' (256px) | 'large' (512px)
+      size:   { type: 'string', default: 'small' },
       // legacy comma fields, kept so pre-ORBI-20 blocks still read/migrate
       images: { type: 'string', default: '' },
       labels: { type: 'string', default: '' },
@@ -227,12 +233,30 @@
       css:    { type: 'string', default: '' }
     },
     edit: function (props) {
-      return groupedItemsEdit(props, {
-        title: 'Soames Icon List',
-        help: 'Each icon groups its image, label, and link together.',
-        itemLabel: 'Icon',
-        addLabel: 'Add icon'
-      });
+      var size = props.attributes.size || 'small';
+      return el(Fragment, {},
+        el(InspectorControls, {},
+          el(PanelBody, { title: 'Size', initialOpen: true },
+            el(SelectControl, {
+              label: 'Icon size',
+              help: 'Height of each icon image.',
+              value: size,
+              options: [
+                { label: 'Small (116px)',  value: 'small'  },
+                { label: 'Medium (256px)', value: 'medium' },
+                { label: 'Large (512px)',  value: 'large'  }
+              ],
+              onChange: function (v) { props.setAttributes({ size: v }); }
+            })
+          )
+        ),
+        groupedItemsEdit(props, {
+          title: 'Soames Icon List',
+          help: 'Each icon groups its image, label, and link together.',
+          itemLabel: 'Icon',
+          addLabel: 'Add icon'
+        })
+      );
     },
     save: function () { return null; }
   });
