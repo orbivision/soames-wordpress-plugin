@@ -79,6 +79,8 @@ function soames_register_icon_list_block() {
         'attributes' => [
             // ORBI-20: grouped rows; each item = { image, label, link, css }
             'items'  => ['type' => 'array',  'default' => []],
+            // ORBI-49: icon image height — 'small' (116px) | 'medium' (256px) | 'large' (512px)
+            'size'   => ['type' => 'string', 'default' => 'small'],
             // legacy comma fields, kept so pre-ORBI-20 blocks still render
             'images' => ['type' => 'string', 'default' => ''],
             'labels' => ['type' => 'string', 'default' => ''],
@@ -86,15 +88,18 @@ function soames_register_icon_list_block() {
             'css'    => ['type' => 'string', 'default' => ''],
         ],
         'render_callback' => function ($attrs) {
+            $size  = $attrs['size'] ?? 'small';
             $items = $attrs['items'] ?? [];
             if (!empty($items) && is_array($items)) {
                 // New format: JSON in data-items (comma-safe).
                 return '<div class="wp-block-soames-icon-list"'
+                    . ' data-size="'  . esc_attr($size) . '"'
                     . ' data-items="' . esc_attr(wp_json_encode($items)) . '">'
                     . '</div>';
             }
             // Legacy fallback: positional comma-separated attributes.
             return '<div class="wp-block-soames-icon-list"'
+                . ' data-size="'   . esc_attr($size) . '"'
                 . ' data-images="' . esc_attr($attrs['images'] ?? '') . '"'
                 . ' data-labels="' . esc_attr($attrs['labels'] ?? '') . '"'
                 . ' data-links="'  . esc_attr($attrs['links']  ?? '') . '"'
