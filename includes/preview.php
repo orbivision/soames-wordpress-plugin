@@ -68,6 +68,10 @@ function soames_rest_preview( WP_REST_Request $request ) {
             $blog_hero    = [
                 'title'          => $blog_page ? get_the_title( $blog_page ) : null,
                 'excerpt'        => $blog_page ? $blog_page->post_excerpt : null,
+                // ORBI-52: dedicated hero title/caption; null when unset (the theme
+                // falls back to `title` for the hero title, and shows no caption).
+                'heroTitle'      => get_post_meta( $blog_page_id, 'soames_hero_title', true ) ?: null,
+                'heroCaption'    => get_post_meta( $blog_page_id, 'soames_hero_caption', true ) ?: null,
                 'guid'           => $bp_thumb_src ? $bp_thumb_src[0] : null,
                 'overlayOpacity' => get_post_meta( $blog_page_id, 'soames_overlay_opacity', true ) ?: '0.6',
             ];
@@ -80,6 +84,9 @@ function soames_rest_preview( WP_REST_Request $request ) {
         'content'        => apply_filters( 'the_content', $post->post_content ),
         'excerpt'        => apply_filters( 'the_excerpt', $post->post_excerpt ),
         'date'           => get_the_date( 'F d, Y', $post ),
+        // ORBI-52: null when unset — same contract as the GraphQL heroTitle/heroCaption.
+        'heroTitle'      => get_post_meta( $post->ID, 'soames_hero_title', true ) ?: null,
+        'heroCaption'    => get_post_meta( $post->ID, 'soames_hero_caption', true ) ?: null,
         'overlayOpacity' => get_post_meta( $post->ID, 'soames_overlay_opacity', true ) ?: '0.6',
         'featuredImage'  => $featured_image,
         'blogHero'       => $blog_hero,

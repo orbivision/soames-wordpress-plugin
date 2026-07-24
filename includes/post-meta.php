@@ -4,6 +4,34 @@ defined( 'ABSPATH' ) || exit;
 // ── Register hero post meta ───────────────────────────────────────────────────
 
 add_action( 'init', function () {
+    // Hero title (ORBI-52). Replaces the page/post title in the hero; the theme
+    // falls back to the post title when this is empty, so the WP title stays free
+    // for the browser/SEO title. Resolved to null in GraphQL when unset.
+    $title_args = [
+        'type'              => 'string',
+        'single'            => true,
+        'default'           => '',
+        'show_in_rest'      => true,
+        'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
+        'sanitize_callback' => 'sanitize_text_field',
+    ];
+    register_post_meta( 'page', 'soames_hero_title', $title_args );
+    register_post_meta( 'post', 'soames_hero_title', $title_args );
+
+    // Hero caption (ORBI-52). Replaces the excerpt as the hero subhead. NO
+    // fallback: empty means the theme renders no caption at all. wp_kses_post
+    // because the theme parses this as HTML (inline formatting/links).
+    $caption_args = [
+        'type'              => 'string',
+        'single'            => true,
+        'default'           => '',
+        'show_in_rest'      => true,
+        'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
+        'sanitize_callback' => 'wp_kses_post',
+    ];
+    register_post_meta( 'page', 'soames_hero_caption', $caption_args );
+    register_post_meta( 'post', 'soames_hero_caption', $caption_args );
+
     // Overlay opacity (string, e.g. "0.6").
     $opacity_args = [
         'type'              => 'string',
@@ -47,6 +75,24 @@ add_action( 'add_meta_boxes', function () {
 function soames_hero_render_meta_box( $post ) {
     wp_nonce_field( 'soames_hero_save', 'soames_hero_nonce' );
 
+    // Hero title (ORBI-52) — blank falls back to the page/post title in the theme.
+    $hero_title = (string) get_post_meta( $post->ID, 'soames_hero_title', true );
+    echo '<label for="soames_hero_title" style="display:block;margin-bottom:6px">Title</label>';
+    printf(
+        '<input type="text" id="soames_hero_title" name="soames_hero_title" value="%s" style="width:100%%;box-sizing:border-box" />',
+        esc_attr( $hero_title )
+    );
+    echo '<p class="description" style="margin-bottom:14px">Optional. Defaults to the page title.</p>';
+
+    // Hero caption (ORBI-52) — blank means no caption is rendered at all.
+    $hero_caption = (string) get_post_meta( $post->ID, 'soames_hero_caption', true );
+    echo '<label for="soames_hero_caption" style="display:block;margin-bottom:6px">Caption</label>';
+    printf(
+        '<textarea id="soames_hero_caption" name="soames_hero_caption" rows="3" style="width:100%%;box-sizing:border-box">%s</textarea>',
+        esc_textarea( $hero_caption )
+    );
+    echo '<p class="description" style="margin-bottom:14px">Optional. Leave blank to show no caption. Basic inline HTML allowed.</p>';
+
     // Hero background image picker (above the overlay opacity control).
     $bg_id  = (int) get_post_meta( $post->ID, 'soames_hero_bg_id', true );
     $bg_url = $bg_id ? wp_get_attachment_image_url( $bg_id, 'medium' ) : '';
@@ -88,6 +134,17 @@ add_action( 'save_post', function ( $post_id ) {
         ! current_user_can( 'edit_post', $post_id )
     ) return;
 
+    // ORBI-52: write even when empty so clearing a field really clears it (an empty
+    // caption is meaningful — it means "render no caption").
+    if ( isset( $_POST['soames_hero_title'] ) ) {
+        update_post_meta( $post_id, 'soames_hero_title', sanitize_text_field( $_POST['soames_hero_title'] ) );
+    }
+    if ( isset( $_POST['soames_hero_caption'] ) ) {
+        // wp_unslash before kses: $_POST is slashed, and kses parsing an escaped
+        // attribute quote (href=\"…\") would strip the attribute.
+        update_post_meta( $post_id, 'soames_hero_caption', wp_kses_post( wp_unslash( $_POST['soames_hero_caption'] ) ) );
+    }
+
     if ( isset( $_POST['soames_overlay_opacity'] ) ) {
         update_post_meta( $post_id, 'soames_overlay_opacity', sanitize_text_field( $_POST['soames_overlay_opacity'] ) );
     }
@@ -121,6 +178,21 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 
 add_action( 'graphql_register_types', function () {
     foreach ( [ 'Page', 'Post' ] as $type ) {
+        // ORBI-52: null when unset — the THEME owns the fallback chain (hero title
+        // → post title → template default), the same way heroBackgroundImage leaves
+        // the featured-image fallback to the theme's resolveHeroBg().
+        register_graphql_field( $type, 'heroTitle', [
+            'type'        => 'String',
+            'description' => 'Hero header title. Null when unset; the theme falls back to the post title.',
+            'resolve'     => fn( $post ) => get_post_meta( $post->databaseId, 'soames_hero_title', true ) ?: null,
+        ] );
+
+        register_graphql_field( $type, 'heroCaption', [
+            'type'        => 'String',
+            'description' => 'Hero header caption (HTML). Null when unset; the theme then renders no caption — there is deliberately no excerpt fallback.',
+            'resolve'     => fn( $post ) => get_post_meta( $post->databaseId, 'soames_hero_caption', true ) ?: null,
+        ] );
+
         register_graphql_field( $type, 'overlayOpacity', [
             'type'        => 'String',
             'description' => 'Hero header overlay opacity (0.2–0.7)',
