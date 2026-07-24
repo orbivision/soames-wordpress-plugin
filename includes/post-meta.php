@@ -7,13 +7,16 @@ add_action( 'init', function () {
     // Hero title (ORBI-52). Replaces the page/post title in the hero; the theme
     // falls back to the post title when this is empty, so the WP title stays free
     // for the browser/SEO title. Resolved to null in GraphQL when unset.
+    // wp_kses_post, not sanitize_text_field: the theme parses this as HTML, so a
+    // `<br>` (or inline formatting) must survive the save — stripping tags here
+    // silently collapsed multi-line hero titles to one line.
     $title_args = [
         'type'              => 'string',
         'single'            => true,
         'default'           => '',
         'show_in_rest'      => true,
         'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
-        'sanitize_callback' => 'sanitize_text_field',
+        'sanitize_callback' => 'wp_kses_post',
     ];
     register_post_meta( 'page', 'soames_hero_title', $title_args );
     register_post_meta( 'post', 'soames_hero_title', $title_args );
@@ -82,7 +85,7 @@ function soames_hero_render_meta_box( $post ) {
         '<input type="text" id="soames_hero_title" name="soames_hero_title" value="%s" style="width:100%%;box-sizing:border-box" />',
         esc_attr( $hero_title )
     );
-    echo '<p class="description" style="margin-bottom:14px">Optional. Defaults to the page title.</p>';
+    echo '<p class="description" style="margin-bottom:14px">Optional. Defaults to the page title. HTML allowed — use <code>&lt;br&gt;</code> to split the title over two lines.</p>';
 
     // Hero caption (ORBI-52) — blank means no caption is rendered at all.
     $hero_caption = (string) get_post_meta( $post->ID, 'soames_hero_caption', true );
@@ -91,7 +94,7 @@ function soames_hero_render_meta_box( $post ) {
         '<textarea id="soames_hero_caption" name="soames_hero_caption" rows="3" style="width:100%%;box-sizing:border-box">%s</textarea>',
         esc_textarea( $hero_caption )
     );
-    echo '<p class="description" style="margin-bottom:14px">Optional. Leave blank to show no caption. Basic inline HTML allowed.</p>';
+    echo '<p class="description" style="margin-bottom:14px">Optional. Leave blank to show no caption. HTML allowed.</p>';
 
     // Hero background image picker (above the overlay opacity control).
     $bg_id  = (int) get_post_meta( $post->ID, 'soames_hero_bg_id', true );
@@ -135,13 +138,14 @@ add_action( 'save_post', function ( $post_id ) {
     ) return;
 
     // ORBI-52: write even when empty so clearing a field really clears it (an empty
-    // caption is meaningful — it means "render no caption").
+    // caption is meaningful — it means "render no caption"). Both fields are HTML
+    // (the theme parses them), hence wp_kses_post; wp_unslash first because $_POST
+    // is slashed and kses parsing an escaped attribute quote (href=\"…\") would
+    // strip the attribute.
     if ( isset( $_POST['soames_hero_title'] ) ) {
-        update_post_meta( $post_id, 'soames_hero_title', sanitize_text_field( $_POST['soames_hero_title'] ) );
+        update_post_meta( $post_id, 'soames_hero_title', trim( wp_kses_post( wp_unslash( $_POST['soames_hero_title'] ) ) ) );
     }
     if ( isset( $_POST['soames_hero_caption'] ) ) {
-        // wp_unslash before kses: $_POST is slashed, and kses parsing an escaped
-        // attribute quote (href=\"…\") would strip the attribute.
         update_post_meta( $post_id, 'soames_hero_caption', wp_kses_post( wp_unslash( $_POST['soames_hero_caption'] ) ) );
     }
 
