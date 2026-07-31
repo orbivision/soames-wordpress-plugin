@@ -1,0 +1,20 @@
+{
+  "name": "soames-wordpress-plugin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dev/test tooling for the Soames WordPress plugin. The plugin itself is PHP — nothing here ships to WordPress.",
+  "scripts": {
+    "env:start": "wp-env start",
+    "env:stop": "wp-env stop",
+    "env:destroy": "wp-env destroy",
+    "seed": "wp-env run cli --env-cwd=/var/www/html wp eval-file wp-content/plugins/soames-wordpress-plugin/tests/fixtures/seed.php",
+    "test:e2e": "npm run env:start && npm run seed && playwright test",
+    "test:e2e:only": "playwright test",
+    "lint:php": "docker run --rm -v \"$PWD\":/app php:8.2-cli sh -c 'find /app -name \"*.php\" -not -path \"*/node_modules/*\" -print0 | xargs -0 -n1 php -l'",
+    "zip": "bash bin/build-zip.sh"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@wordpress/env": "^11.12.0"
+  }
+}

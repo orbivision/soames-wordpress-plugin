@@ -1,0 +1,9 @@
+node_modules/
+# Playwright output (ORBI-54)
+playwright-report/
+test-results/
+/playwright/.cache/
+# Built distribution zips (npm run zip)
+/build/
+*.zip
+tests/e2e/.fixtures.json
