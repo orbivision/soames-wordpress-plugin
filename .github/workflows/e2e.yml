@@ -1,0 +1,67 @@
+name: E2E
+
+# ORBI-54: the first CI this repo has had.
+#
+# Two jobs, cheapest first: `lint` catches a syntax error in seconds, `e2e` boots a
+# real WordPress via @wordpress/env and asserts the plugin's contract with the Astro
+# theme (block markup, WPGraphQL fields, settings REST shape, avatar resolution).
+#
+# Runs on the bare runner, NOT inside a container image: wp-env drives Docker itself,
+# and nesting that would mean Docker-in-Docker. No screenshots here, so there's no
+# font-rendering reason to pin an image either.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    name: php -l
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint every PHP file
+        run: |
+          find . -name '*.php' -not -path './node_modules/*' -print0 \
+            | xargs -0 -n1 -P4 php -l
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Downloads WordPress + WPGraphQL and boots MySQL; the slowest step by far.
+      - name: Start WordPress
+        run: npx wp-env start
+
+      # globalSetup seeds fixtures, so no separate seed step is needed.
+      - name: Run e2e tests
+        run: npx playwright test
+
+      - name: WordPress debug log
+        if: failure()
+        run: npx wp-env run cli cat wp-content/debug.log || true
+
+      - name: Upload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
