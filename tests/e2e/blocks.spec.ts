@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { fixtures, WP_BASE } from "./wp";
+import { fixtures } from "./wp";
 
 // THE contract test. The theme maps `wp-block-soames-*` class names to components and
 // reads its data off `data-*` attributes (repeaters via a `data-items` JSON payload).
@@ -89,7 +89,14 @@ const CONTRACTS: Contract[] = [
 
 test.beforeEach(async ({ page }) => {
   const f = fixtures();
-  await page.goto(`${WP_BASE}/${f.blocksSlug}/`);
+  // Use the permalink WordPress itself generated, and CHECK THE STATUS. Composing the
+  // URL by hand and not asserting the response is how a rewrite-rule problem shows up
+  // as "expected 8 blocks, received 0" instead of "the page 404'd".
+  const res = await page.goto(f.blocksUrl);
+  expect(
+    res?.status(),
+    `all-blocks fixture did not render at ${f.blocksUrl} — rewrite rules or seed problem, not a block problem`
+  ).toBe(200);
 });
 
 for (const c of CONTRACTS) {

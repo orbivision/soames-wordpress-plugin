@@ -26,6 +26,10 @@ export interface Fixtures {
   docsChildren: Record<string, number>;
   blocksSlug: string;
   heroSlug: string;
+  blocksUrl: string;
+  plainPostUrl: string;
+  heroPageUrl: string;
+  docsUrl: string;
 }
 
 export function fixtures(): Fixtures {

@@ -260,9 +260,30 @@ $gql_settings = is_array( $gql_settings ) ? $gql_settings : [];
 $gql_settings['public_introspection_enabled'] = 'on';
 update_option( 'graphql_general_settings', $gql_settings );
 
-// Pretty permalinks, so front-end assertions can use slugs.
+// Pretty permalinks. Needed because WPGraphQL's `uri` — which is how the theme routes
+// every post, page and doc — is derived from the permalink structure.
+//
+// Getting this to work from WP-CLI takes three non-obvious steps, and missing any one
+// of them 404s the whole front end while `wp option get permalink_structure` happily
+// reports the right value:
+//
+//   1. `got_rewrite` must be forced. save_mod_rewrite_rules() checks
+//      got_mod_rewrite(), which calls apache_get_modules() — unavailable in the CLI
+//      SAPI, so it returns false and .htaccess is written with EMPTY rules. That's the
+//      one that bit: the file existed with the WordPress markers and nothing between
+//      them, so Apache 404'd every pretty URL.
+//   2. $wp_rewrite->init() must run AFTER update_option(). The object was built from
+//      the old value at request start, so flushing first regenerates the old rules.
+//   3. flush_rules(true) — a soft flush skips .htaccess entirely.
+//
+// Why CI caught this and local didn't: locally an earlier run had already left a good
+// .htaccess behind, so every later seed looked fine. On a fresh CI database it was one
+// seed, one shot, and all of blocks.spec failed.
+add_filter( 'got_rewrite', '__return_true' );
 update_option( 'permalink_structure', '/%postname%/' );
-flush_rewrite_rules();
+global $wp_rewrite;
+$wp_rewrite->init();
+$wp_rewrite->flush_rules( true );
 
 echo wp_json_encode( [
     'authorId'     => (int) $author_id,
@@ -277,4 +298,10 @@ echo wp_json_encode( [
     'docsChildren' => $docs_children,
     'blocksSlug'   => SEED_BLOCKS_SLUG,
     'heroSlug'     => SEED_HERO_SLUG,
+    // Permalinks straight from WordPress, so specs never compose a URL by hand and
+    // can't silently assert against a 404 if a rewrite rule changes.
+    'blocksUrl'    => get_permalink( $blocks_post_id ),
+    'plainPostUrl' => get_permalink( $plain_post_id ),
+    'heroPageUrl'  => get_permalink( $hero_page_id ),
+    'docsUrl'      => get_permalink( $docs_parent_id ),
 ] ) . "\n";

@@ -68,6 +68,13 @@ Two things to know if you extend it:
 - **It purges and recreates** anything whose slug starts with `soames-e2e-`. Upserting
   can't be made reliable: when a slug collides WordPress appends `-2`, `-3`, … so a
   duplicate is no longer findable by the slug the seeder knows.
+- **Pretty permalinks need `got_rewrite` forced.** WPGraphQL's `uri` (how the theme
+  routes everything) comes from the permalink structure, but from WP-CLI
+  `save_mod_rewrite_rules()` checks `got_mod_rewrite()` → `apache_get_modules()`, which
+  doesn't exist in the CLI SAPI. So it writes a `.htaccess` containing the WordPress
+  markers and **no rules**, Apache 404s every pretty URL, and `wp option get
+  permalink_structure` still reports the correct value. The seed forces the filter,
+  calls `$wp_rewrite->init()` *after* `update_option()`, and flushes hard.
 - **Serialize dynamic blocks self-closing**, e.g. `<!-- wp:soames/feature {…} /-->`.
   Every Soames block is `save: null`, so the editor writes no inner HTML. Giving one
   inner content makes the editor flag "unexpected or invalid content" — and for the

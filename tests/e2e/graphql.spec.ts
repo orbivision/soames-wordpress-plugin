@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { fixtures, graphql, WP_BASE } from "./wp";
+import { fixtures, graphql } from "./wp";
 
 // The WPGraphQL surface the theme queries. A field that silently disappears (a typo in
 // graphql_register_types, a plugin load-order change) breaks the site BUILD, which is
@@ -110,9 +110,9 @@ test("the docs post type keeps its key and GraphQL names", async ({ request }) =
 
 test("docs are served under the /docs/ rewrite slug", async ({ request }) => {
   const f = fixtures();
-  const res = await request.get(`${WP_BASE}/docs/soames-e2e-guide/`, {
-    failOnStatusCode: false,
-  });
-  expect(res.status(), "/docs/ rewrite slug changed").toBe(200);
-  expect(f.docsParentId).toBeGreaterThan(0);
+  // The permalink WordPress generated must still sit under /docs/ — ORBI-36 kept that
+  // rewrite slug deliberately when the admin labels were rebranded.
+  expect(f.docsUrl, "/docs/ rewrite slug changed").toContain("/docs/");
+  const res = await request.get(f.docsUrl, { failOnStatusCode: false });
+  expect(res.status(), `docs fixture unreachable at ${f.docsUrl}`).toBe(200);
 });
