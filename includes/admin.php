@@ -102,7 +102,7 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
         'soames-plugin-admin',
         SOAMES_PLUGIN_URL . 'assets/admin.js',
         [ 'jquery' ],
-        '1.0.0',
+        soames_asset_version( 'assets/admin.js' ),
         true
     );
 } );

@@ -1,11 +1,18 @@
 <?php
 /**
- * Plugin Name: Soames
- * Plugin URI:  https://soames.app
- * Description: Site configuration, preview support, media assets, and WPGraphQL extensions for the Soames Astro theme.
- * Version:     1.0.0
- * Requires PHP: 7.4
- * Author:      Orbi Software
+ * Plugin Name:       Soames
+ * Plugin URI:        https://soames.app
+ * Description:       Site configuration, preview support, media assets, and WPGraphQL extensions for the Soames Astro theme.
+ * Version:           0.9.0
+ * Requires at least: 6.5
+ * Tested up to:      7.0
+ * Requires PHP:      7.4
+ * Requires Plugins:  wp-graphql
+ * Author:            Orbi Software
+ * Author URI:        https://www.orbisoftware.com
+ * License:           GPL-2.0-or-later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       soames
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -17,6 +24,46 @@ add_post_type_support( 'page', 'excerpt' );
 
 define( 'SOAMES_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SOAMES_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'SOAMES_PLUGIN_FILE', __FILE__ );
+
+/**
+ * The plugin version, read from the header above (ORBI-57).
+ *
+ * Deliberately NOT a second hardcoded literal. The header is what WordPress itself
+ * reads, so it is the one place a release can't forget to update — and the release
+ * workflow asserts the git tag matches it. Anything that needs the version at
+ * runtime (asset cache-busting, future update checks) should use this constant so
+ * there is never a second number to drift.
+ *
+ * get_file_data() is used rather than get_plugin_data() because the latter lives in
+ * wp-admin/includes/plugin.php and isn't loaded on front-end requests.
+ */
+define(
+	'SOAMES_PLUGIN_VERSION',
+	get_file_data( __FILE__, [ 'Version' => 'Version' ] )['Version']
+);
+
+/**
+ * Cache-busting version for a bundled asset.
+ *
+ * Released installs get the plugin version, so one bump busts every asset at once.
+ * WP_DEBUG installs get the file mtime instead, because iterating on the editor JS
+ * without touching the version otherwise serves stale script from the browser cache.
+ * mtime is deliberately NOT used in production: it's the file-copy time, so it
+ * differs between installs and changes on every redeploy even when nothing did.
+ *
+ * @param string $relative_path Path below the plugin root, e.g. 'assets/admin.js'.
+ * @return string
+ */
+function soames_asset_version( $relative_path ) {
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		$file = SOAMES_PLUGIN_DIR . ltrim( $relative_path, '/' );
+		if ( file_exists( $file ) ) {
+			return (string) filemtime( $file );
+		}
+	}
+	return SOAMES_PLUGIN_VERSION;
+}
 
 require_once SOAMES_PLUGIN_DIR . 'includes/admin.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/user-avatar.php';

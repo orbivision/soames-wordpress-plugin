@@ -29,7 +29,7 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 		'soames-docs-ordering',
 		SOAMES_PLUGIN_URL . 'assets/docs-ordering.js',
 		[ 'jquery', 'jquery-ui-sortable' ], // jquery-ui-sortable ships with WP core
-		'1.0.0',
+		soames_asset_version( 'assets/docs-ordering.js' ),
 		true
 	);
 	wp_localize_script( 'soames-docs-ordering', 'SoamesDocsOrder', [

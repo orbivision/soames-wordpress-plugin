@@ -31,13 +31,11 @@ function soames_enqueue_block_editor_assets() {
     // Ensure the media library frame is available for the Icon List image picker.
     wp_enqueue_media();
 
-    $editor_js = SOAMES_PLUGIN_DIR . 'assets/js/soames-blocks.js';
     wp_enqueue_script(
         'soames-blocks-editor',
         SOAMES_PLUGIN_URL . 'assets/js/soames-blocks.js',
         ['wp-blocks', 'wp-element', 'wp-components', 'wp-block-editor'],
-        // Version by file mtime so edits bust the browser cache automatically.
-        file_exists($editor_js) ? filemtime($editor_js) : '1.0.0',
+        soames_asset_version('assets/js/soames-blocks.js'),
         true
     );
 }
