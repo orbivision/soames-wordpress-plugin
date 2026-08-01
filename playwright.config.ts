@@ -18,8 +18,23 @@ export default defineConfig({
 
   // Tests within a file run serially: several of them toggle GLOBAL WordPress state
   // (show_avatars, for one), and parallel tests in the same file would race on it.
-  // Files still run in parallel across workers.
   fullyParallel: false,
+
+  // ORBI-57: ...and one worker, because "files still run in parallel across workers"
+  // left that same hazard wide open ACROSS files. There is a single WordPress instance
+  // behind every spec, so global state has no file scope:
+  //   - avatar.spec toggles show_avatars off site-wide, during which any other spec
+  //     reading `avatar { url }` gets null;
+  //   - the profile round-trip clears a user's avatar and puts it back.
+  // The second one is what actually failed — graphql.spec read Ada's avatar inside the
+  // cleared window and got a `d=mm` Gravatar URL, in CI only, on a commit that passed
+  // locally. That spec now mutates its own dedicated user, but isolation-by-fixture
+  // can't cover a site-wide option, so the suite is serial.
+  //
+  // The cost is small and worth naming: this suite is ~35 tests that spend most of
+  // their time shelling out to Docker, so serializing trades tens of seconds for a
+  // class of failure that only ever shows up in CI and reads as a real regression.
+  workers: 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["html", { open: "never" }], ["list"]] : "list",

@@ -124,6 +124,26 @@ wp_update_user( [ 'ID' => $plain_id, 'display_name' => 'Plain Author' ] );
 delete_user_meta( $plain_id, 'soames_avatar_id' );
 delete_user_meta( $plain_id, 'soames_avatar_url' );
 
+// A third author that exists purely to be MUTATED (ORBI-57).
+//
+// The profile-form round-trip spec clears an avatar, asserts the Gravatar fall-through,
+// then puts it back. It used to do that to $author_id — the same user graphql.spec and
+// the sized-rendition spec read. playwright.config.ts sets fullyParallel: false, which
+// serializes tests *within* a file but still runs files across workers, so those reads
+// could land inside the cleared window. That's exactly how CI failed (a `d=mm` Gravatar
+// URL) while the same commit passed locally: shared WordPress, different timing.
+// Destructive specs get their own subject so no assertion depends on another file's pace.
+$picker = get_user_by( 'login', 'soames_e2e_picker' );
+$picker_id = $picker ? $picker->ID : wp_insert_user( [
+    'user_login' => 'soames_e2e_picker',
+    'user_email' => 'soames-e2e-picker@example.com',
+    'user_pass'  => wp_generate_password(),
+    'role'       => 'author',
+] );
+wp_update_user( [ 'ID' => $picker_id, 'display_name' => 'Picker Subject' ] );
+update_user_meta( $picker_id, 'soames_avatar_id', $avatar_id );
+update_user_meta( $picker_id, 'soames_avatar_url', wp_get_attachment_image_url( $avatar_id, 'thumbnail' ) );
+
 // ── A post containing every Soames block ─────────────────────────────────────
 //
 // Dynamic blocks (save: null) serialize as self-closing block comments, which is
@@ -288,6 +308,8 @@ $wp_rewrite->flush_rules( true );
 echo wp_json_encode( [
     'authorId'     => (int) $author_id,
     'plainId'      => (int) $plain_id,
+    // Mutate this one, not authorId — see the comment where it's created.
+    'pickerId'     => (int) $picker_id,
     'avatarId'     => (int) $avatar_id,
     'heroImageId'  => (int) $hero_id,
     'blocksPostId' => (int) $blocks_post_id,
