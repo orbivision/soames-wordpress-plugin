@@ -83,10 +83,16 @@ test("the profile field renders with the media picker wired up", async ({ page }
   expect(await page.evaluate(() => typeof (window as any).wp?.media)).toBe("function");
 });
 
+// Operates on pickerId, NOT authorId (ORBI-57). This test clears an avatar and puts it
+// back; graphql.spec's author fragment and the sized-rendition test below both READ
+// authorId's avatar, and playwright.config.ts runs spec files across parallel workers.
+// Pointing all three at one user meant those reads could land inside the cleared window
+// — which is how CI failed with a `d=mm` Gravatar URL on a commit that passed locally.
+// Destructive specs get a subject nobody else asserts on.
 test("the picker round-trips through the real profile form", async ({ page }) => {
   const f = fixtures();
   await login(page);
-  const url = `${WP_BASE}/wp-admin/user-edit.php?user_id=${f.authorId}`;
+  const url = `${WP_BASE}/wp-admin/user-edit.php?user_id=${f.pickerId}`;
 
   // Clear via the Remove button, then save the real form.
   await page.goto(url);
@@ -95,7 +101,7 @@ test("the picker round-trips through the real profile form", async ({ page }) =>
   await page.locator("#submit").click();
   await page.waitForURL(/user-edit\.php/);
 
-  expect(wpEval(`echo get_avatar_url(${f.authorId});`)).toContain("gravatar.com");
+  expect(wpEval(`echo get_avatar_url(${f.pickerId});`)).toContain("gravatar.com");
 
   // Set it back by writing the attachment ID the way the media modal does.
   await page.goto(url);
@@ -105,7 +111,7 @@ test("the picker round-trips through the real profile form", async ({ page }) =>
   await page.locator("#submit").click();
   await page.waitForURL(/user-edit\.php/);
 
-  const restored = wpEval(`echo get_avatar_url(${f.authorId});`);
+  const restored = wpEval(`echo get_avatar_url(${f.pickerId});`);
   expect(restored).toMatch(/\/wp-content\/uploads\/.+\.png$/);
 });
 

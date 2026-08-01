@@ -12,12 +12,26 @@
 # Reminder: deploy the plugin WHOLE. Editor JS in assets/ and the PHP in includes/
 # must ship together — a stale blocks.php silently breaks block rendering even when
 # the editor still looks correct.
+#
+# ORBI-57: the zip filename is deliberately UNVERSIONED. The published download URL
+# is https://github.com/orbivision/soames-wordpress-plugin/releases/latest/download/
+# soames-wordpress-plugin.zip, and that GitHub redirect only works if every release
+# names its asset identically. The version lives in the plugin header (and is printed
+# below), not in the filename.
 set -euo pipefail
 
 SLUG="soames-wordpress-plugin"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$ROOT/build"
 STAGE="$OUT/$SLUG"
+
+# Read the version straight out of the plugin header — the same string WordPress
+# reads. Nothing else in the repo is authoritative, so there's nothing to drift.
+VERSION="$(sed -n 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*\(.*[^[:space:]]\)[[:space:]]*$/\1/p' "$ROOT/$SLUG.php" | head -n1)"
+if [ -z "$VERSION" ]; then
+  echo "ERROR: could not read 'Version:' from $SLUG.php header" >&2
+  exit 1
+fi
 
 rm -rf "$STAGE" "$OUT/$SLUG.zip"
 mkdir -p "$STAGE"
@@ -26,13 +40,14 @@ mkdir -p "$STAGE"
 # allowlist fails safe: a new dev-only directory is excluded by default rather than
 # silently shipped.
 cp "$ROOT/$SLUG.php" "$STAGE/"
+cp "$ROOT/LICENSE" "$STAGE/"
 cp -R "$ROOT/includes" "$STAGE/"
 cp -R "$ROOT/assets" "$STAGE/"
 
 ( cd "$OUT" && zip -qr "$SLUG.zip" "$SLUG" )
 rm -rf "$STAGE"
 
-echo "Built $OUT/$SLUG.zip"
+echo "Built $OUT/$SLUG.zip (version $VERSION)"
 unzip -l "$OUT/$SLUG.zip" | tail -n 3
 
 # Guard: if any of the dev-only paths ever leak in, fail loudly rather than letting

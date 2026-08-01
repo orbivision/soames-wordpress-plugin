@@ -1,0 +1,85 @@
+name: Release
+
+# ORBI-57: tag-triggered release. Same trigger shape as soames-astro-theme's
+# publish.yml (`v*.*.*`), different artifact — that repo publishes to npm, this one
+# attaches an installable zip to a GitHub Release.
+#
+# The published download URL is:
+#   https://github.com/orbivision/soames-wordpress-plugin/releases/latest/download/soames-wordpress-plugin.zip
+# GitHub's `latest/download/` redirect resolves by ASSET NAME, so the zip filename is
+# unversioned and must stay that way — see bin/build-zip.sh.
+#
+# Releasing:
+#   1. bump the Version: header + add the CHANGELOG section, merge to main
+#   2. git tag v0.9.0 && git push origin v0.9.0
+#
+# Step 2 with a tag that doesn't match the header fails the run (see "Verify" below)
+# rather than publishing a zip whose version lies. That mismatch is the exact failure
+# this repo already had: a 1.0.0 header carried across ~20 projects.
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write        # needed to create the Release
+
+jobs:
+  release:
+    name: Build + publish zip
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # No npm ci: build-zip.sh is bash + `zip` only. The Node tooling in this repo is
+      # for the e2e suite (see e2e.yml) and has nothing to do with the artifact.
+      - name: Verify the tag matches the plugin header
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME#v}"
+          HEADER="$(sed -n 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*\(.*[^[:space:]]\)[[:space:]]*$/\1/p' \
+            soames-wordpress-plugin.php | head -n1)"
+          echo "tag=$TAG header=$HEADER"
+          if [ -z "$HEADER" ]; then
+            echo "::error::Could not read 'Version:' from the plugin header" >&2
+            exit 1
+          fi
+          if [ "$TAG" != "$HEADER" ]; then
+            echo "::error::Tag v$TAG does not match the plugin header ($HEADER). Bump the header and re-tag." >&2
+            exit 1
+          fi
+
+      - name: Lint every PHP file
+        run: |
+          find . -name '*.php' -not -path './node_modules/*' -print0 \
+            | xargs -0 -n1 -P4 php -l
+
+      - name: Build the zip
+        run: bash bin/build-zip.sh
+
+      # Release notes come from the CHANGELOG section for this version, so the notes and
+      # the changelog can't drift. Falls back to a bare pointer if the section is absent.
+      - name: Extract release notes
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { found = 1; next }
+            found && /^## \[/       { exit }
+            found                    { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "No CHANGELOG entry found for $VERSION — see CHANGELOG.md." > release-notes.md
+          fi
+          cat release-notes.md
+
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            build/soames-wordpress-plugin.zip \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file release-notes.md

@@ -8,6 +8,46 @@ The plugin itself is **plain PHP** — `soames-wordpress-plugin.php` plus `inclu
 and `assets/`. Everything else in this repo (`package.json`, `tests/`, `.wp-env.json`)
 is development tooling added in ORBI-54 and **does not ship**.
 
+**Requires [WPGraphQL](https://wordpress.org/plugins/wp-graphql/)** — declared with the
+`Requires Plugins` header, so WordPress 6.5+ enforces it at activation.
+
+## Versioning (ORBI-57)
+
+The version of record is the **`Version:` header** in `soames-wordpress-plugin.php`. That's
+what WordPress reads, so it's the one value a release can't forget. Nothing else in the repo
+is authoritative: `bin/build-zip.sh` parses it out of the header, `SOAMES_PLUGIN_VERSION` is
+derived from it at runtime via `get_file_data()`, `package.json`'s version is a courtesy
+mirror for humans, and the release workflow **fails if the git tag doesn't match it**.
+
+Releases are git tags `vX.Y.Z`; each one's GitHub Release carries the installable zip. See
+[CHANGELOG.md](CHANGELOG.md).
+
+### What the numbers mean
+
+Blocks are a two-sided contract — this plugin emits `wp-block-soames-*` markup carrying
+`data-*` payloads, and `soames-astro-theme` components consume it. So SemVer here is defined
+against **that contract**, not against how much code moved:
+
+| Bump | Means | Examples |
+|---|---|---|
+| **MAJOR** | Breaking change to what the theme parses. An older theme renders wrongly or not at all. | Renaming/removing a block's `data-*` attribute or wrapper class; changing the shape of a `data-items` JSON payload; renaming a settings key, REST key, or GraphQL field. |
+| **MINOR** | New capability, backward compatible. An older theme keeps working, it just won't use the new thing. | A new block; a new setting; a new GraphQL field or REST key; a new optional attribute on an existing block. |
+| **PATCH** | No contract change. | Admin bug fixes, editor UX, PHP notices, wp-admin styling. |
+
+So an admin-only change is a PATCH however large, and a one-line rename of a `data-`
+attribute is a MAJOR. The e2e tests are the practical test of which one you're making:
+**if an assertion in `blocks.spec.ts` or `graphql.spec.ts` had to change, it isn't a PATCH.**
+
+### Compatibility with `soames-astro-theme`
+
+| Plugin | Astro theme (npm) | Notes |
+|---|---|---|
+| `0.9.0` | `>= 0.1.18` | First versioned release. Earlier theme versions predate this version line and were only ever paired by date. |
+
+Update this table in the same PR as any contract change. Nothing enforces it: a stale plugin
+against a fresh theme renders empty divs rather than erroring, which is precisely why the
+pairing has to be written down.
+
 ## Deploying
 
 **Deploy the plugin whole.** The editor JS in `assets/` and the PHP in `includes/`
@@ -39,6 +79,13 @@ npm run lint:php         # php -l over every file, in a php:8.2-cli container
 npm run env:start        # http://localhost:8977 (admin / password)
 npm run env:destroy      # tear it all down
 ```
+
+**Plugin order in `.wp-env.json` matters.** wp-env activates that array in sequence, and
+since ORBI-57 the plugin declares `Requires Plugins: wp-graphql`, so WordPress 6.5+ refuses
+to activate Soames while WPGraphQL is inactive — `wp-env start` dies with *"Soames requires
+1 plugin to be installed and activated: WPGraphQL"* and then *"No plugins activated"*.
+WPGraphQL is listed first for that reason; don't reorder it. (wp-env also rejects unknown
+keys, so that note can't live in the JSON as a comment.)
 
 ### What these assert, and why
 
