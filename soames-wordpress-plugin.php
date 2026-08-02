@@ -3,7 +3,7 @@
  * Plugin Name:       Soames
  * Plugin URI:        https://soames.app
  * Description:       Site configuration, preview support, media assets, and WPGraphQL extensions for the Soames Astro theme.
- * Version:           0.9.0
+ * Version:           1.0.0
  * Requires at least: 6.5
  * Tested up to:      7.0
  * Requires PHP:      7.4
@@ -21,6 +21,21 @@ defined( 'ABSPATH' ) || exit;
 // Called directly here rather than in an init hook to ensure it's registered
 // early enough for WPGraphQL to pick it up regardless of hook order.
 add_post_type_support( 'page', 'excerpt' );
+
+// ORBI-58: moved out of the companion theme's functions.php.
+//
+// Featured-image support is theme-level in WordPress — a post type declaring 'thumbnail'
+// in its `supports` isn't enough on its own. The `docs` CPT declares it and preview.php
+// reads get_post_thumbnail_id(), so without this the featured-image box disappears the
+// moment someone switches away from the Soames theme. Unlike add_post_type_support above,
+// add_theme_support has to run on after_setup_theme to be reliable from a plugin.
+//
+// The theme's add_theme_support('custom-logo') was deliberately NOT carried over: Soames
+// serves its logo from its own soames_logo_id option (see includes/settings-api.php), and
+// nothing in the plugin or the Astro theme reads the custom_logo theme mod.
+add_action( 'after_setup_theme', function () {
+	add_theme_support( 'post-thumbnails' );
+} );
 
 define( 'SOAMES_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SOAMES_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -69,6 +84,7 @@ require_once SOAMES_PLUGIN_DIR . 'includes/admin.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/user-avatar.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/nav-menus.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/preview.php';
+require_once SOAMES_PLUGIN_DIR . 'includes/frontend-redirect.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/cors.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/post-meta.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/settings-api.php';
