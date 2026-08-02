@@ -11,6 +11,37 @@ is development tooling added in ORBI-54 and **does not ship**.
 **Requires [WPGraphQL](https://wordpress.org/plugins/wp-graphql/)** — declared with the
 `Requires Plugins` header, so WordPress 6.5+ enforces it at activation.
 
+**No companion theme needed** as of 1.0.0. Keep whatever theme you like; it will never
+render, because the plugin redirects front-end requests before template loading (ORBI-58).
+
+## Front-end redirection (ORBI-58)
+
+`includes/frontend-redirect.php` sends visitors who land on WordPress over to the published
+Soames site. It used to be the companion theme's `index.php`.
+
+| Request | Goes to |
+|---|---|
+| Single post | `<frontend>/<posts-page-slug>/<post-path>` |
+| Page, Knowledge Base article, any other single item | `<frontend><path>` |
+| Archives, search, 404, front page | `<frontend>/` |
+
+All 302, deliberately — the destination is a user-configurable setting, and a 301 would be
+cached hard by browsers and CDNs, stranding visitors if the Frontend Site URL ever changes.
+The blog base comes from WordPress's "Posts page" setting, mirroring `integration.ts` in the
+Astro theme (including its `blog` fallback) so the two sides can't disagree.
+
+**Moving this out of a theme removed a natural boundary.** As a theme it only ran once
+WordPress rendered a template; from a plugin it runs on every front-end request. The bail-outs
+are therefore the whole safety story, and each is asserted in `tests/e2e/redirect.spec.ts`:
+wp-admin, AJAX, cron, REST, XML-RPC, JSON requests, **WPGraphQL**, previews, `robots.txt`,
+feeds, trackbacks, sitemaps and embeds. GraphQL is the one that matters most — an install
+whose endpoint redirects is a total build outage that presents as a broken site rather than a
+broken WordPress.
+
+Two off-switches: the **Front-end redirection** checkbox under Soames → Settings, and the
+`soames_frontend_redirect_target` filter for anything the exclusions don't anticipate (return
+`''` to leave a request alone).
+
 ## Versioning (ORBI-57)
 
 The version of record is the **`Version:` header** in `soames-wordpress-plugin.php`. That's
@@ -42,6 +73,7 @@ attribute is a MAJOR. The e2e tests are the practical test of which one you're m
 
 | Plugin | Astro theme (npm) | Notes |
 |---|---|---|
+| `1.0.0` | `>= 0.1.18` | Companion WordPress theme folded in — no longer required (ORBI-58). Front-end unchanged, so no Astro theme bump. |
 | `0.9.0` | `>= 0.1.18` | First versioned release. Earlier theme versions predate this version line and were only ever paired by date. |
 
 Update this table in the same PR as any contract change. Nothing enforces it: a stale plugin
@@ -100,6 +132,7 @@ renders nothing, and no screenshot test would notice.
 | `graphql.spec.ts` | `heroTitle` / `heroCaption` / `overlayOpacity` / `heroBackgroundImage` are registered and round-trip; unset means `null` (not `""`); the author fragment; docs `menuOrder` + `parentDatabaseId`; the `docs` key and `Document`/`Documents` GraphQL names |
 | `rest.spec.ts` | `soames/v1/settings` keeps the shape the theme's `getSoamesSettings()` destructures — unset values `null`, `showCompanyName` boolean; `soames/v1/preview` still registered |
 | `avatar.spec.ts` | ORBI-53 profile pictures: local avatar overrides Gravatar, users without one fall through, `force_default` bypasses, `show_avatars=0` nulls the GraphQL avatar, and the picker round-trips through the real profile form |
+| `redirect.spec.ts` | ORBI-58 front-end redirection: the post/page/docs mapping, the blog base following the Posts page slug, and every exclusion — **GraphQL**, REST, wp-admin, previews, `robots.txt` — plus both off-switches. Sets a frontend URL in `beforeAll` and clears it in `afterAll`, since the rest of the suite fetches rendered HTML from WordPress directly and would otherwise get 302s |
 | `admin.spec.ts` | Soames admin pages load without PHP notices; the Knowledge Base submenu stays nested and ordered; **the all-blocks post opens in the editor with no block-validation warnings** (the Block API v3 iframe regression class — ORBI-49) |
 
 ### Fixtures

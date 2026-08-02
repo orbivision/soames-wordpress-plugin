@@ -9,6 +9,53 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-08-02
+
+**Soames is now a single plugin.** The companion WordPress theme is no longer required: its
+front-end redirect and its theme-support declarations moved here (ORBI-58), so installing
+Soames is WPGraphQL → Soames, and you keep whatever theme you like. This mirrors how
+[Faust.js](https://wordpress.org/plugins/faustwp/) handles headless redirection.
+
+### Upgrading from 0.9.0
+
+Nothing to do. The redirect takes over automatically and behaves the same, so the companion
+theme becomes inert whether or not it stays active. You can switch to any theme at your
+convenience — it will never render, because the redirect runs before template loading.
+
+### Added
+
+- **Front-end redirection in the plugin** (`includes/frontend-redirect.php`), on
+  `template_redirect`. Posts, pages and Knowledge Base articles redirect to their matching
+  address on the front-end site; everything else goes to its home page.
+- **A "Front-end redirection" setting** under Soames → Settings, on by default. Turn it off to
+  make WordPress serve its own theme again while debugging. It has no effect until a Frontend
+  Site URL is set.
+- **A `soames_frontend_redirect_target` filter** — the escape hatch for requests the built-in
+  exclusions don't anticipate. Return `''` to leave a request alone.
+- **`redirect.spec.ts`** — 13 e2e tests covering the mapping and, more importantly, every
+  exclusion: GraphQL, REST, wp-admin, previews, `robots.txt`, and both off-switches.
+
+### Fixed
+
+- **Posts redirected to a hardcoded `/blog`** regardless of the site's actual Posts page. The
+  Astro front end derives that base from WordPress's "Posts page" setting, so any install
+  using a different slug — `news`, `articles` — sent visitors to a URL the front end never
+  generates. Both sides now read the same setting, with the same `blog` fallback.
+- **Knowledge Base articles lost their path.** The theme handled only posts and pages, so a
+  `/docs/<slug>` article fell through to the catch-all and landed on the front end's home
+  page. Any single item now keeps its path.
+
+### Changed
+
+- **All redirects are now 302**, including the catch-all the theme issued as a 301. The
+  destination is a user-configurable setting, and a 301 is cached hard by browsers and CDNs —
+  changing the Frontend Site URL later would strand everyone who had hit the old one.
+- `post-thumbnails` support is declared by the plugin on `after_setup_theme`. It's theme-level
+  in WordPress, so without it the featured-image box vanishes when you leave the companion
+  theme.
+- `custom-logo` support was **not** carried over. Soames serves its logo from its own
+  `soames_logo_id` setting, and nothing read the `custom_logo` theme mod.
+
 ## [0.9.0] — 2026-08-01
 
 **First versioned release.** Everything below shipped continuously to a single production
@@ -77,5 +124,6 @@ not in release order, because there were no releases.
   invalid inside a paragraph (ORBI-43).
 - Soames admin submenu order (ORBI-37).
 
-[Unreleased]: https://github.com/orbivision/soames-wordpress-plugin/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/orbivision/soames-wordpress-plugin/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v1.0.0
 [0.9.0]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v0.9.0

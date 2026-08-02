@@ -117,6 +117,13 @@ function soames_register_settings() {
         'sanitize_callback' => 'soames_sanitize_frontend_url',
         'default'           => '',
     ] );
+    register_setting( 'soames_options', 'soames_frontend_redirect', [
+        'type'              => 'string',
+        // Checkboxes post nothing when unchecked, so absence means off. Default '1' keeps
+        // upgrades from the companion theme behaving identically (ORBI-58).
+        'sanitize_callback' => function ( $value ) { return $value ? '1' : '0'; },
+        'default'           => '1',
+    ] );
     register_setting( 'soames_options', 'soames_docs_page_id', [
         'type'              => 'integer',
         'sanitize_callback' => 'absint',
@@ -202,6 +209,31 @@ function soames_settings_page() {
                         />
                         <p class="description">
                             Direct visits to this WordPress installation will be redirected to this URL.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">Front-end redirection</th>
+                    <td>
+                        <label for="soames_frontend_redirect">
+                            <input
+                                type="checkbox"
+                                id="soames_frontend_redirect"
+                                name="soames_frontend_redirect"
+                                value="1"
+                                <?php checked( get_option( 'soames_frontend_redirect', '1' ), '1' ); ?>
+                            />
+                            Send visitors to the front-end site
+                        </label>
+                        <p class="description">
+                            On by default. Posts, pages and Knowledge Base articles redirect to
+                            their matching address on the front-end site; everything else goes to
+                            its home page. Previews are never redirected — they open on the
+                            front-end site's preview route.
+                            <br />
+                            Turn this off to make WordPress serve its own active theme again,
+                            which is useful while debugging. It has no effect until a
+                            <strong>Frontend Site URL</strong> is set above.
                         </p>
                     </td>
                 </tr>
