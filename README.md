@@ -73,6 +73,7 @@ attribute is a MAJOR. The e2e tests are the practical test of which one you're m
 
 | Plugin | Astro theme (npm) | Notes |
 |---|---|---|
+| `1.0.1` | `>= 0.1.19` | Admin-only fix (Knowledge Base panel on the Menus screen). Pairs with any 0.1.x theme; 0.1.19 is listed because it's current. |
 | `1.0.0` | `>= 0.1.18` | Companion WordPress theme folded in — no longer required (ORBI-58). Front-end unchanged, so no Astro theme bump. |
 | `0.9.0` | `>= 0.1.18` | First versioned release. Earlier theme versions predate this version line and were only ever paired by date. |
 
@@ -132,6 +133,7 @@ renders nothing, and no screenshot test would notice.
 | `graphql.spec.ts` | `heroTitle` / `heroCaption` / `overlayOpacity` / `heroBackgroundImage` are registered and round-trip; unset means `null` (not `""`); the author fragment; docs `menuOrder` + `parentDatabaseId`; the `docs` key and `Document`/`Documents` GraphQL names |
 | `rest.spec.ts` | `soames/v1/settings` keeps the shape the theme's `getSoamesSettings()` destructures — unset values `null`, `showCompanyName` boolean; `soames/v1/preview` still registered |
 | `avatar.spec.ts` | ORBI-53 profile pictures: local avatar overrides Gravatar, users without one fall through, `force_default` bypasses, `show_avatars=0` nulls the GraphQL avatar, and the picker round-trips through the real profile form |
+| `nav-menus.spec.ts` | ORBI-60: the Knowledge Base panel is present on Appearance → Menus and lists articles; an article can be added to a menu and survives a save; and the un-hide happens **once** rather than being forced on every load, so a user who deliberately hides the panel keeps it hidden |
 | `redirect.spec.ts` | ORBI-58 front-end redirection: the post/page/docs mapping, the blog base following the Posts page slug, and every exclusion — **GraphQL**, REST, wp-admin, previews, `robots.txt` — plus both off-switches. Sets a frontend URL in `beforeAll` and clears it in `afterAll`, since the rest of the suite fetches rendered HTML from WordPress directly and would otherwise get 302s |
 | `admin.spec.ts` | Soames admin pages load without PHP notices; the Knowledge Base submenu stays nested and ordered; **the all-blocks post opens in the editor with no block-validation warnings** (the Block API v3 iframe regression class — ORBI-49) |
 

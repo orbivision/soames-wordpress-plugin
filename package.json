@@ -1,6 +1,6 @@
 {
   "name": "soames-wordpress-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Dev/test tooling for the Soames WordPress plugin. The plugin itself is PHP — nothing here ships to WordPress. This version field is a courtesy mirror: the version of record is the `Version:` header in soames-wordpress-plugin.php, which is what WordPress reads and what the release workflow checks the git tag against.",
   "license": "GPL-2.0-or-later",

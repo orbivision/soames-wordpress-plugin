@@ -9,6 +9,27 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-08-03
+
+### Fixed
+
+- **Knowledge Base articles could not be added to a navigation menu.** On Appearance → Menus
+  the "Knowledge Base" panel was missing, with no way to reach it short of knowing to tick it
+  under Screen Options.
+
+  Not a misconfiguration and not a WordPress 7.0 regression: the first time any user opens the
+  Menus screen, core's `wp_initial_nav_menu_meta_boxes()` hides every panel except a hardcoded
+  four — page, post, custom links, category — and writes the rest into that user's
+  `metaboxhidden_nav-menus`. Every custom post type is hidden, `docs` included, despite
+  `show_in_nav_menus => true`. The list has no filter, so a plugin cannot opt into it.
+
+  It bites more than once because the value is stored per user, and `get_user_option()` is
+  blog-prefixed — so on multisite each site in the network starts hidden again.
+
+  The plugin now un-hides the panel **once** per user and records that it has done so, leaving
+  the checkbox under the user's control from then on. Covered by `tests/e2e/nav-menus.spec.ts`,
+  including that a deliberate re-hide is respected.
+
 ## [1.0.0] — 2026-08-02
 
 **Soames is now a single plugin.** The companion WordPress theme is no longer required: its
@@ -124,6 +145,7 @@ not in release order, because there were no releases.
   invalid inside a paragraph (ORBI-43).
 - Soames admin submenu order (ORBI-37).
 
-[Unreleased]: https://github.com/orbivision/soames-wordpress-plugin/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/orbivision/soames-wordpress-plugin/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v1.0.1
 [1.0.0]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v1.0.0
 [0.9.0]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v0.9.0
