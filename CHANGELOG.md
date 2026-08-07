@@ -9,6 +9,31 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-08-06
+
+### Added
+
+- **Soames Icon Header block** (ORBI-63). A full-width gray band with an icon tile beside a
+  title / subtitle / meta stack — the shape a résumé or timeline entry wants. Emits
+  `wp-block-soames-icon-header` carrying `data-image`, `data-title`, `data-subtitle` and
+  `data-meta`.
+
+  It exists because that band was previously hand-written as a raw
+  `<section class="soames-section-subhead">` in post content, and the theme's built-in-block
+  fallback (ORBI-59) now constrains any unmapped top-level element to the content column — so
+  the band stopped stretching edge to edge. The theme skips wrapping anything classed
+  `wp-block-soames-*`, so moving the markup into a real block restores the full-width band by
+  construction, without changing that fallback for anything else.
+
+  **Needs `soames-astro-theme` >= 0.1.21**, which carries the matching renderer. Against an
+  older theme the block emits its div and nothing renders it — an empty gap, not an error.
+
+### Changed
+
+- Block counts in `tests/e2e/admin.spec.ts` (10 → 11 instances, 8 → 9 registered types) to
+  account for the new block. Both are deliberate guards against the suite silently falling
+  behind the plugin, and both failed before being updated.
+
 ## [1.0.1] — 2026-08-03
 
 ### Fixed
@@ -145,7 +170,8 @@ not in release order, because there were no releases.
   invalid inside a paragraph (ORBI-43).
 - Soames admin submenu order (ORBI-37).
 
-[Unreleased]: https://github.com/orbivision/soames-wordpress-plugin/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/orbivision/soames-wordpress-plugin/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v1.1.0
 [1.0.1]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v1.0.1
 [1.0.0]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v1.0.0
 [0.9.0]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v0.9.0
