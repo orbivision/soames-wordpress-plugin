@@ -178,6 +178,8 @@ $blocks = <<<HTML
 
 <!-- wp:soames/title-bar-lg {"title":"Big Title","subtitle":"Sub, with comma","background":"https://example.com/bg.jpg"} /-->
 
+<!-- wp:soames/icon-header {"image":"https://example.com/logo.png","title":"Software Engineering Manager","subtitle":"iHomefinder, Inc.","meta":"Apr 2022 – Present"} /-->
+
 <!-- wp:soames/icon-list {"items":$items_json,"size":"medium"} /-->
 
 <!-- wp:soames/gallery-menu {"items":$items_json,"layout":"compact"} /-->

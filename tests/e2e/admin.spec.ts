@@ -68,8 +68,8 @@ test("the all-blocks post opens in the editor with no block validation warnings"
   const blocks = canvas.locator('[data-type^="soames/"]');
   await expect(blocks.first()).toBeVisible({ timeout: 30_000 });
 
-  // 10 seeded block instances (8 types + 2 legacy variants).
-  expect(await blocks.count()).toBe(10);
+  // 11 seeded block instances (9 types + 2 legacy variants).
+  expect(await blocks.count()).toBe(11);
 
   // The actual assertion: nothing failed to validate or crashed while rendering.
   await expect(canvas.locator(".block-editor-warning")).toHaveCount(0);
@@ -97,7 +97,7 @@ test("Soames blocks are available in the inserter under their own category", asy
       .map((b: any) => ({ name: b.name, category: b.category }))
   );
 
-  expect(registered.length).toBe(8);
+  expect(registered.length).toBe(9);
   for (const b of registered) {
     expect(b.category, `${b.name} category`).toBe("soames");
   }

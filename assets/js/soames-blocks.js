@@ -215,6 +215,53 @@
     save: function () { return null; }
   });
 
+  // soames/icon-header (ORBI-63) — full-width gray band: icon tile beside a
+  // title / subtitle / meta stack. Image picker modelled on soames/feature.
+  registerBlockType('soames/icon-header', {
+    apiVersion: 3,
+    title: 'Soames Icon Header',
+    icon: 'id',
+    category: CATEGORY,
+    attributes: {
+      image:    { type: 'string', default: '' },
+      title:    { type: 'string', default: '' },
+      subtitle: { type: 'string', default: '' },
+      meta:     { type: 'string', default: '' }
+    },
+    edit: function (props) {
+      var image = props.attributes.image || '';
+      return el('div', useBlockProps({ style: { padding: '12px', border: '1px solid #ddd' } }),
+        el('strong', {}, 'Soames Icon Header'),
+        el('div', { style: { marginBottom: '8px' } },
+          el(MediaUploadCheck, {},
+            el(MediaUpload, {
+              allowedTypes: ['image'],
+              onSelect: function (media) { props.setAttributes({ image: media.url }); },
+              render: function (o) {
+                return el('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' } },
+                  image
+                    ? el('img', { src: image, alt: '', style: { height: '40px', width: '40px', objectFit: 'contain', border: '1px solid #ddd', borderRadius: '4px' } })
+                    : null,
+                  // ORBI-49: text labels, not icons — the v3 iframed editor doesn't
+                  // load Dashicons into the canvas, so icon-only Buttons are invisible.
+                  el(Button, { isSecondary: true, onClick: o.open }, image ? 'Replace icon' : 'Select icon'),
+                  image
+                    ? el(Button, { isLink: true, isDestructive: true, onClick: function () { props.setAttributes({ image: '' }); } }, 'Clear')
+                    : null
+                );
+              }
+            })
+          ),
+          el(TextControl, { label: 'Icon URL', value: image, onChange: function (v) { props.setAttributes({ image: v }); } })
+        ),
+        el(TextControl, { label: 'Title',    help: 'Rendered as the H2 — e.g. the job title.',    value: props.attributes.title,    onChange: function (v) { props.setAttributes({ title: v }); } }),
+        el(TextControl, { label: 'Subtitle', help: 'Rendered as the H3 — e.g. the employer.',     value: props.attributes.subtitle, onChange: function (v) { props.setAttributes({ subtitle: v }); } }),
+        el(TextControl, { label: 'Meta',     help: 'Rendered as the H5 — e.g. the date range.',   value: props.attributes.meta,     onChange: function (v) { props.setAttributes({ meta: v }); } })
+      );
+    },
+    save: function () { return null; }
+  });
+
   // soames/icon-list — grouped repeater (ORBI-20). Each icon keeps its
   // image/label/link/css together; serialized as an `items` array.
   registerBlockType('soames/icon-list', {

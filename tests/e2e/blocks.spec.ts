@@ -36,6 +36,18 @@ const CONTRACTS: Contract[] = [
     },
   },
   {
+    // ORBI-63. Subtitle carries a comma and meta an en dash — both go through
+    // esc_attr, so this catches an encoding regression in the render callback.
+    block: "icon-header",
+    selector: ".wp-block-soames-icon-header",
+    attrs: {
+      "data-image": "https://example.com/logo.png",
+      "data-title": "Software Engineering Manager",
+      "data-subtitle": "iHomefinder, Inc.",
+      "data-meta": "Apr 2022 – Present",
+    },
+  },
+  {
     block: "icon-list",
     selector: '.wp-block-soames-icon-list[data-items]',
     attrs: { "data-size": "medium" },
