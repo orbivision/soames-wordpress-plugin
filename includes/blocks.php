@@ -17,6 +17,7 @@ function soames_register_blocks() {
     }
     soames_register_title_bar_block();
     soames_register_title_bar_lg_block();
+    soames_register_icon_header_block();
     soames_register_icon_list_block();
     soames_register_feature_block();
     soames_register_gallery_menu_block();
@@ -66,6 +67,31 @@ function soames_register_title_bar_lg_block() {
                 . ' data-title="'      . esc_attr($attrs['title']      ?? '') . '"'
                 . ' data-subtitle="'   . esc_attr($attrs['subtitle']   ?? '') . '"'
                 . ' data-background="' . esc_attr($attrs['background'] ?? '') . '">'
+                . '</div>';
+        },
+    ]);
+}
+
+// ORBI-63: full-width gray header band — icon tile beside a title / subtitle / meta
+// stack. Replaces the hand-written `<section class="soames-section-subhead">` HTML the
+// Resume page used, which ORBI-59's core-block fallback now boxes into the content
+// column (the theme skips wrapping anything classed `wp-block-soames-*`, so a real
+// block spans full width again). Attribute-only, like title-bar-lg.
+function soames_register_icon_header_block() {
+    register_block_type('soames/icon-header', [
+        'api_version' => 3,
+        'attributes' => [
+            'image'    => ['type' => 'string', 'default' => ''],
+            'title'    => ['type' => 'string', 'default' => ''],
+            'subtitle' => ['type' => 'string', 'default' => ''],
+            'meta'     => ['type' => 'string', 'default' => ''],
+        ],
+        'render_callback' => function ($attrs) {
+            return '<div class="wp-block-soames-icon-header"'
+                . ' data-image="'    . esc_attr($attrs['image']    ?? '') . '"'
+                . ' data-title="'    . esc_attr($attrs['title']    ?? '') . '"'
+                . ' data-subtitle="' . esc_attr($attrs['subtitle'] ?? '') . '"'
+                . ' data-meta="'     . esc_attr($attrs['meta']     ?? '') . '">'
                 . '</div>';
         },
     ]);
