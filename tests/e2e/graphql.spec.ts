@@ -56,6 +56,46 @@ test("unset hero fields follow the documented null/default contract", async ({ r
   expect(p.overlayOpacity).toBe("0.6");
 });
 
+// ORBI-64: blogImage is registered on Post ONLY — it's a blog concept, and a Page
+// equivalent would mean a meaningless control on every page. Asserting its ABSENCE on
+// Page is as much the contract as its presence on Post.
+test("blogImage is registered on Post and absent from Page", async ({ request }) => {
+  const data = await graphql<{ page: any; post: any }>(
+    request,
+    `{
+      page: __type(name: "Page") { fields { name } }
+      post: __type(name: "Post") { fields { name } }
+    }`
+  );
+  expect(data.post.fields.map((f: any) => f.name)).toContain("blogImage");
+  expect(data.page.fields.map((f: any) => f.name)).not.toContain("blogImage");
+});
+
+test("blogImage resolves the attachment ID to a full-size URL", async ({ request }) => {
+  const f = fixtures();
+  const data = await graphql<any>(
+    request,
+    `{ post(id: ${f.blocksPostId}, idType: DATABASE_ID) { blogImage } }`
+  );
+  expect(data.post.blogImage).toMatch(/\/wp-content\/uploads\/.+\.png$/);
+});
+
+// The no-fallback contract. This fixture post has NO blog image but DOES have a
+// featured image, so a featured-image fallback creeping into the resolver — the
+// behaviour ORBI-64 deliberately removed — shows up right here as a non-null URL.
+test("blogImage is null when unset, even with a featured image present", async ({ request }) => {
+  const f = fixtures();
+  const data = await graphql<any>(
+    request,
+    `{ post(id: ${f.plainPostId}, idType: DATABASE_ID) {
+        blogImage featuredImage { node { sourceUrl } } } }`
+  );
+  expect(data.post.blogImage).toBeNull();
+  // Guards the fixture itself: if the featured image went missing the test above
+  // would still pass while proving nothing.
+  expect(data.post.featuredImage?.node?.sourceUrl).toMatch(/\.png$/);
+});
+
 test("the author fragment the theme queries resolves", async ({ request }) => {
   const f = fixtures();
   const data = await graphql<any>(
