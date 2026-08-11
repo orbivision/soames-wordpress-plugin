@@ -92,6 +92,9 @@ seed_purge();
 
 $avatar_id = seed_attachment( 'soames-e2e-avatar.png', [ 30, 90, 200 ] );
 $hero_id   = seed_attachment( 'soames-e2e-hero.png', [ 200, 80, 40 ], 1200 );
+// ORBI-64: deliberately far wider than the ~440px sidebar column, so an
+// unconstrained render overflows and the theme-side width assertion is meaningful.
+$blog_image_id = seed_attachment( 'soames-e2e-blog-image.png', [ 60, 160, 90 ], 1600 );
 
 $author = get_user_by( 'login', SEED_AUTHOR_LOGIN );
 $author_id = $author ? $author->ID : wp_insert_user( [
@@ -207,6 +210,9 @@ $blocks_post_id = seed_post( [
     'post_excerpt' => 'Fixture post exercising every Soames block.',
 ] );
 
+// ORBI-64: this post HAS a dedicated blog image, for the sidebar image assertions.
+update_post_meta( $blocks_post_id, 'soames_blog_image_id', $blog_image_id );
+
 // A post by the avatar-less author, for the Gravatar fall-through assertions.
 $plain_post_id = seed_post( [
     'post_type'    => 'post',
@@ -216,6 +222,12 @@ $plain_post_id = seed_post( [
     'post_author'  => $plain_id,
     'post_content' => '<!-- wp:paragraph --><p>No local avatar here.</p><!-- /wp:paragraph -->',
 ] );
+
+// ORBI-64: no blog image, but DOES have a featured image. That combination is the
+// whole point — it's what proves blogImage has no featured-image fallback. If the
+// fallback ever creeps back in, blogImage stops being null here and the spec fails.
+delete_post_meta( $plain_post_id, 'soames_blog_image_id' );
+set_post_thumbnail( $plain_post_id, $hero_id );
 
 // ── A page with every hero field set (ORBI-41/52) ────────────────────────────
 
@@ -314,6 +326,7 @@ echo wp_json_encode( [
     'pickerId'     => (int) $picker_id,
     'avatarId'     => (int) $avatar_id,
     'heroImageId'  => (int) $hero_id,
+    'blogImageId'  => (int) $blog_image_id,
     'blocksPostId' => (int) $blocks_post_id,
     'plainPostId'  => (int) $plain_post_id,
     'heroPageId'   => (int) $hero_page_id,

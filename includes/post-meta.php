@@ -60,6 +60,21 @@ add_action( 'init', function () {
     ];
     register_post_meta( 'page', 'soames_hero_bg_id', $bg_args );
     register_post_meta( 'post', 'soames_hero_bg_id', $bg_args );
+
+    // ORBI-64: dedicated blog image — stores the attachment ID. Shown in the single
+    // post's sidebar above Recent Posts, where the featured image used to be. `post`
+    // ONLY, deliberately: this is a blog concept, and registering it for `page` too
+    // would put a meaningless control on every page. There is NO featured-image
+    // fallback in the theme — the featured image is being freed up for other uses —
+    // so 0 (unset) means no sidebar image renders at all.
+    register_post_meta( 'post', 'soames_blog_image_id', [
+        'type'              => 'integer',
+        'single'            => true,
+        'default'           => 0,
+        'show_in_rest'      => true,
+        'auth_callback'     => fn() => current_user_can( 'edit_posts' ),
+        'sanitize_callback' => 'absint',
+    ] );
 } );
 
 // ── Metabox ───────────────────────────────────────────────────────────────────
@@ -70,6 +85,16 @@ add_action( 'add_meta_boxes', function () {
         'Hero Header',
         'soames_hero_render_meta_box',
         [ 'page', 'post' ],
+        'side',
+        'default'
+    );
+
+    // ORBI-64: posts only — see the register_post_meta note above.
+    add_meta_box(
+        'soames_blog_image_box',
+        'Blog Image',
+        'soames_blog_image_render_meta_box',
+        'post',
         'side',
         'default'
     );
@@ -128,6 +153,48 @@ function soames_hero_render_meta_box( $post ) {
     }
     echo '</select>';
 }
+
+// ORBI-64: the blog image picker. Reuses the shared soames-media-upload /
+// soames-media-clear + data-target wiring in assets/admin.js (data-target="X"
+// drives #X_id and #X_preview), so the hidden input id/name must stay
+// soames_blog_image_id and the preview soames_blog_image_preview.
+function soames_blog_image_render_meta_box( $post ) {
+    wp_nonce_field( 'soames_blog_image_save', 'soames_blog_image_nonce' );
+
+    $img_id  = (int) get_post_meta( $post->ID, 'soames_blog_image_id', true );
+    $img_url = $img_id ? wp_get_attachment_image_url( $img_id, 'medium' ) : '';
+    printf(
+        '<img id="soames_blog_image_preview" src="%s" style="max-width:100%%;height:auto;display:%s;margin-bottom:8px;" />',
+        esc_url( $img_url ),
+        $img_url ? 'block' : 'none'
+    );
+    printf(
+        '<input type="hidden" id="soames_blog_image_id" name="soames_blog_image_id" value="%s" />',
+        esc_attr( $img_id ?: '' )
+    );
+    echo '<button type="button" class="button soames-media-upload" data-target="soames_blog_image">'
+        . ( $img_url ? 'Change image' : 'Select image' ) . '</button> ';
+    printf(
+        '<button type="button" class="button soames-media-clear" data-target="soames_blog_image" style="%s">Remove</button>',
+        $img_url ? '' : 'display:none'
+    );
+    echo '<p class="description">Shown in the sidebar above <em>Recent Posts</em>, in place of the featured image. There is no fallback — leave this blank and the post shows no sidebar image.</p>';
+}
+
+add_action( 'save_post', function ( $post_id ) {
+    if (
+        ! isset( $_POST['soames_blog_image_nonce'] ) ||
+        ! wp_verify_nonce( $_POST['soames_blog_image_nonce'], 'soames_blog_image_save' ) ||
+        ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ||
+        ! current_user_can( 'edit_post', $post_id )
+    ) return;
+
+    if ( isset( $_POST['soames_blog_image_id'] ) ) {
+        // absint( '' ) === 0, which the GraphQL resolver treats as "unset" — so
+        // clearing the picker really clears the image.
+        update_post_meta( $post_id, 'soames_blog_image_id', absint( $_POST['soames_blog_image_id'] ) );
+    }
+} );
 
 add_action( 'save_post', function ( $post_id ) {
     if (
@@ -212,4 +279,18 @@ add_action( 'graphql_register_types', function () {
             },
         ] );
     }
+
+    // ORBI-64: Post only — there is no Page equivalent (see register_post_meta).
+    // Deliberately NO featured-image fallback here or in the theme: null means the
+    // sidebar renders no image. Returns a bare URL, matching heroBackgroundImage;
+    // the theme sizes it with CSS rather than intrinsic width/height attributes,
+    // which is what caused the overflow this story fixes.
+    register_graphql_field( 'Post', 'blogImage', [
+        'type'        => 'String',
+        'description' => 'Dedicated blog image URL, shown in the single post sidebar above Recent Posts. Null when unset — there is deliberately no featured-image fallback.',
+        'resolve'     => function ( $post ) {
+            $id = (int) get_post_meta( $post->databaseId, 'soames_blog_image_id', true );
+            return $id ? wp_get_attachment_image_url( $id, 'full' ) : null;
+        },
+    ] );
 } );
