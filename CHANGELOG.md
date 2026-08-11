@@ -9,6 +9,36 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-08-11
+
+### Added
+
+- **Blog Image field on posts** (ORBI-64). A dedicated per-post image, shown in the single
+  post's sidebar above *Recent Posts* — where the post's **featured image** used to render.
+  Stored as an attachment ID in `soames_blog_image_id` and exposed as `blogImage` on the
+  `Post` GraphQL type, resolved to a full-size URL at query time so it survives
+  media-library URL changes. Modelled on `soames_hero_bg_id`.
+
+  Registered for **`post` only**, and so `blogImage` is on `Post` alone: this is a blog
+  concept, and registering it for `page` would put a meaningless control on every page.
+
+  **There is deliberately no featured-image fallback.** Leave it blank and the post shows no
+  sidebar image at all. This frees the featured image for other uses — it still drives hero
+  backgrounds via the theme's fallback chain, which is unchanged. Existing posts therefore
+  show no sidebar image until a Blog Image is set on each one; that's a content step, not a
+  defect.
+
+  **Needs `soames-astro-theme` >= 0.1.24**, which carries the matching renderer. This pairing
+  is stricter than usual in one direction: that theme adds `blogImage` to its posts query, and
+  an unknown GraphQL field throws during the build — so a site on >= 0.1.24 **requires** this
+  plugin version. Upgrade the plugin first, then the theme.
+
+### Fixed
+
+- The sidebar image no longer overflows its column (ORBI-64; fixed theme-side in 0.1.24).
+  It rendered at its intrinsic WordPress width — 1600px inside a ~440px column — and was
+  clipped at the viewport edge. Noted here because the two halves ship together.
+
 ## [1.1.0] — 2026-08-06
 
 ### Added
@@ -170,7 +200,8 @@ not in release order, because there were no releases.
   invalid inside a paragraph (ORBI-43).
 - Soames admin submenu order (ORBI-37).
 
-[Unreleased]: https://github.com/orbivision/soames-wordpress-plugin/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/orbivision/soames-wordpress-plugin/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v1.2.0
 [1.1.0]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v1.1.0
 [1.0.1]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v1.0.1
 [1.0.0]: https://github.com/orbivision/soames-wordpress-plugin/releases/tag/v1.0.0
