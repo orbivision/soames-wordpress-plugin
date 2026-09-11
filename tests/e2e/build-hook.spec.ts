@@ -9,6 +9,10 @@ import { wpCli, wpEval } from "./wp";
 // schedules exactly one event at the right offset, that a second publish inside the
 // window does not stack a duplicate, and that an unset hook URL schedules nothing.
 //
+// Each assertion was checked by breaking the plugin deliberately: changing the delay
+// fails the offset test, and removing the empty-URL guard fails the URL test. Removing
+// the plugin's own coalescing guard does NOT fail anything — see the note in that test.
+//
 // It CANNOT reproduce the bug in issue #6. That failure is the event never FIRING,
 // because wp-cron only runs when a request arrives and the production WordPress is
 // headless — no traffic, so nothing notices the event is due. wp-env always has
@@ -82,9 +86,18 @@ test.describe("build hook scheduling (ORBI-77)", () => {
     created.push(publishPost("ORBI-77 coalesce B"));
     const second = scheduled();
 
-    // This is the whole point of ORBI-32: one build for a burst, and it must not be
-    // pushed further out by each edit either, or a steady stream of saves would
-    // starve the build indefinitely.
+    // One build for a burst, and the timestamp must not be pushed further out by each
+    // edit either, or a steady stream of saves would starve the build indefinitely.
+    //
+    // HONEST SCOPE (measured, ORBI-77): this pins OBSERVABLE behaviour, not the plugin's
+    // guard. WordPress core already refuses a duplicate — wp_schedule_single_event()
+    // rejects the same hook+args within a 10-minute window. Verified directly:
+    // two calls 1s apart returned true then FALSE, with 1 event scheduled. So deleting
+    // the plugin's own `wp_next_scheduled()` check does NOT fail this test (that was
+    // tried). The plugin's guard is belt-and-braces on top of core.
+    //
+    // The test still earns its place: it fails if the design moves to immediate-fire,
+    // or stops scheduling at all. It just is not evidence that the guard is present.
     expect(second).toHaveLength(1);
     expect(second[0]).toBe(first[0]);
   });
