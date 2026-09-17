@@ -52,7 +52,9 @@ unzip -l "$OUT/$SLUG.zip" | tail -n 3
 
 # Guard: if any of the dev-only paths ever leak in, fail loudly rather than letting
 # someone upload a 200MB zip full of tests.
-if unzip -l "$OUT/$SLUG.zip" | grep -qE "node_modules|/tests/|package\.json|\.wp-env"; then
+# ORBI-80: deploy/ holds the server-side cron recipe. It is documentation for a host
+# rebuild, not plugin code — a cron file inside wp-content does nothing but confuse.
+if unzip -l "$OUT/$SLUG.zip" | grep -qE "node_modules|/tests/|/deploy/|package\.json|\.wp-env"; then
   echo "ERROR: dev-only files leaked into the zip" >&2
   exit 1
 fi

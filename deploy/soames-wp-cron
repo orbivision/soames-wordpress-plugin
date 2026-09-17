@@ -1,0 +1,20 @@
+# ORBI-77 — run WP-Cron on a real schedule.
+#
+# WP-Cron only fires when an HTTP request arrives, and this WordPress is headless:
+# both front ends are static on Netlify, so the install gets almost no traffic and
+# scheduled events sat unrun for minutes at a time. Measured 2026-09-11: the same
+# event still due 150s later, with more piling up behind it.
+#
+# Nothing else noticed, because every other job here is hourly or daily. The Soames
+# build hook defers only 30s (deliberate coalescing, ORBI-32), so it was the first
+# thing to break: publishing a page usually did not trigger a Netlify build at all,
+# and saving a second time appeared to "fix" it — that second save was simply the
+# next request, which ran the overdue event.
+#
+# Cron queues are PER-SITE on multisite. Sites 1 and 4 are the two carrying Netlify
+# build hooks; the network also has orbivision.orbivision.net and
+# optima-express-portal.com, which have none.
+#
+# Output goes to a log, not /dev/null: these entries failed silently once already.
+* * * * * www-data /usr/local/bin/wp --path=/var/www/html/orbivision.net/public_html cron event run --due-now --url=soames.orbivision.net >> /var/log/soames-cron.log 2>&1
+* * * * * www-data /usr/local/bin/wp --path=/var/www/html/orbivision.net/public_html cron event run --due-now --url=orbivision.net >> /var/log/soames-cron.log 2>&1

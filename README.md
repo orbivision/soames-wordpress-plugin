@@ -97,6 +97,64 @@ from GitHub: both would sweep up `tests/`, `.wp-env.json`, and potentially a ~20
 `node_modules`. The script copies an explicit allowlist and fails if a dev-only path
 leaks in.
 
+## The server-side half: WP-Cron (ORBI-77, ORBI-80)
+
+**`deploy/soames-wp-cron` is a restore recipe, not a synced copy. The server is
+authoritative.** It was transcribed from the live `/etc/cron.d/soames-wp-cron` on
+**2026-09-17** and matched it byte for byte (1357 bytes). Nothing keeps the two in
+step, so treat a disagreement as the repo being stale — and re-verify before relying
+on it.
+
+### Why it exists
+
+This plugin's build hook does not POST to Netlify when you publish. It schedules a
+**single deferred WP-Cron event 30 seconds out**, so a burst of edits coalesces into
+one build that captures the final state (ORBI-32). That design depends on WP-Cron
+firing on time — and WP-Cron only runs when an HTTP request arrives. **This WordPress
+is headless**: both front ends are static on Netlify, so almost no traffic reaches it
+and the event simply sat unrun. Publishing a page often triggered no build at all,
+and saving a second time appeared to fix it — that second save was just the next
+request, running the overdue event.
+
+Regular cron does not *enable* WP-Cron here; it supplies the requests WP-Cron was
+always waiting for.
+
+### Restoring it after a host rebuild
+
+```bash
+sudo install -o root -g root -m 644 deploy/soames-wp-cron /etc/cron.d/soames-wp-cron
+sudo touch /var/log/soames-cron.log && sudo chown www-data:www-data /var/log/soames-cron.log
+```
+
+Four things that are easy to get wrong, each of which broke it once:
+
+- **WP-CLI must live somewhere `www-data` can reach** — `/usr/local/bin/wp`, root:root
+  755. It was originally installed to `~/bin`, and `/home/<user>` is mode 0750, so
+  `www-data` could not traverse into it. The entries failed before WP-CLI even started.
+- **One entry per subsite.** Cron queues are **per-site** on multisite. Only the sites
+  carrying a Netlify build hook need one — currently `soames.orbivision.net` and
+  `orbivision.net`.
+- **Never `>/dev/null`.** These entries failed silently for an entire debugging session
+  because their output was discarded. A cron job that discards its errors cannot tell
+  you it is broken.
+- **Do not verify with "Deploy now."** That button fires the hook immediately and
+  bypasses cron entirely, so it reports success on exactly the fault you are testing
+  for. Verify by saving a post once and watching for a Netlify build.
+
+### Verifying
+
+Measure **strictly past a full period** — this is a per-minute cron, so any reading
+inside the first 60 seconds is indistinguishable from failure, and repeat it. A single
+observation of an intermittent process proves nothing; ORBI-77 made four wrong calls
+in a row that way.
+
+```bash
+sudo tail -f /var/log/soames-cron.log
+```
+
+The diagnosis in full, including what the log should look like, is in the orbi-claude
+repo at `projects/ORBI-77/plan.md`.
+
 ## Tests (ORBI-54)
 
 End-to-end tests against a real WordPress in Docker via
