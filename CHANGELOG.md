@@ -9,6 +9,12 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-09-17
+
+A **PATCH**, not a minor: nothing the theme parses changed. No block markup, no settings key,
+no REST key, no GraphQL field — the two new options are internal and unexposed, and no
+assertion in `blocks.spec.ts` or `graphql.spec.ts` moved. Pairs with any `0.1.x` theme.
+
 ### Added
 
 - **The build hook now measures whether it is actually firing on time** (ORBI-80). Publishing

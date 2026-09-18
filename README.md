@@ -73,6 +73,8 @@ attribute is a MAJOR. The e2e tests are the practical test of which one you're m
 
 | Plugin | Astro theme (npm) | Notes |
 |---|---|---|
+| `1.2.1` | `>= 0.1.18` | Admin-only (ORBI-80): a wp-admin warning when the build hook fires late, plus `deploy/`. PATCH — nothing the theme parses changed, so it pairs with any `0.1.x` theme. |
+| `1.2.0` | `>= 0.1.24` | Blog Image field and the `blogImage` field on `Post` (ORBI-64). **Row added retroactively in 1.2.1** — 1.2.0 shipped without one. The pairing is real: `0.1.24` is the theme release that first reads `blogImage` (verified against the theme's git history), and an older theme renders no sidebar image. |
 | `1.1.0` | `>= 0.1.21` | New Soames Icon Header block (ORBI-63). MINOR, but the pairing is real in one direction: an older theme has no renderer for `wp-block-soames-icon-header`, so the block emits its div and leaves an empty gap. Everything else keeps working. |
 | `1.0.1` | `>= 0.1.19` | Admin-only fix (Knowledge Base panel on the Menus screen). Pairs with any 0.1.x theme; 0.1.19 is listed because it's current. |
 | `1.0.0` | `>= 0.1.18` | Companion WordPress theme folded in — no longer required (ORBI-58). Front-end unchanged, so no Astro theme bump. |
