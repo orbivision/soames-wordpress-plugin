@@ -9,6 +9,40 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+### Added
+
+- **The build hook now measures whether it is actually firing on time** (ORBI-80). Publishing
+  schedules a build 30 seconds out and relies on WP-Cron to run it; on a headless WordPress
+  with almost no traffic of its own, that event can simply sit unrun, and the symptom — a save
+  that never reaches the live site — reads as a plugin bug. ORBI-77 fixed that with a server
+  cron entry. This makes a recurrence announce itself.
+
+  Lateness is recorded **at fire time**, not checked at read time. That distinction is the
+  whole design: WordPress spawns WP-Cron from incoming requests, so on a headless install the
+  admin page load that would display a warning is itself the traffic that clears the condition.
+  An "is anything overdue right now" check reports healthy precisely when somebody is there to
+  read it.
+
+  A warning appears in wp-admin when the last build ran more than five minutes late, or when a
+  build has been waiting that long without running. It appears only on sites that have a
+  Netlify build hook configured — the other subsites on a network have nothing to be late —
+  and only for users who can manage options. An on-time build clears it.
+
+  This does **not** duplicate WordPress's own `Tools › Site Health` check, which already
+  reports any event overdue by five minutes. Core only ever inspects *pending* events and keeps
+  no memory of one that has already fired, so it cannot report that a build ran late, only that
+  something is late now. The notice links to Site Health rather than restating it.
+
+### Documentation
+
+- **`deploy/soames-wp-cron`** and a new README section, *The server-side half: WP-Cron*
+  (ORBI-80). The ORBI-77 fix lived only on the Linode, where a host rebuild or restore would
+  silently revert publishing to the broken state. The file is a **restore recipe, not a synced
+  copy** — the server remains authoritative — and the README records the four things that each
+  broke it once: WP-CLI must sit somewhere `www-data` can traverse, one cron entry per subsite
+  because cron queues are per-site on multisite, never `>/dev/null`, and never verify with
+  "Deploy now" (it bypasses cron and so reports success on the exact fault being tested for).
+
 ## [1.2.0] — 2026-08-11
 
 ### Added
