@@ -9,6 +9,39 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-09-25
+
+A **MINOR**: one new REST key and one admin notice. No block markup, GraphQL field, or
+existing settings key changed, and no assertion in `blocks.spec.ts` or `graphql.spec.ts`
+moved. An older theme ignores the new key, so this pairs with any `0.1.x` theme; the
+Optima Express pages themselves need a theme that reads it (`0.1.27`).
+
+### Added
+
+- **Optima Express (IDX) support for static sites** (ORBI-82). `soames/v1/settings` gains
+  `optimaExpress`: the Kestrel config and the virtual-page URL patterns a static build needs
+  to emit one shell per page type plus a rewrite from each pattern to its shell.
+  - It is `null` unless Optima Express is **active and registered** on that site. The plugin
+    is network-activated on a multisite, so "active" alone is true everywhere; registration
+    (Optima Express's own `isActivated()`) is what keeps it off every other subsite.
+  - The URL patterns come from **WordPress's rewrite table**, not from Optima Express's
+    classes, so they survive that plugin's refactors and already reflect an admin's
+    customised slugs. All 52 of Optima Express 8.7.7's rules translate. Any rule outside the
+    supported shape is counted in `skippedRules` rather than silently dropped.
+  - Carries only the public `activationToken` (Optima Express prints it in every page head
+    anyway), never the server-side authentication token.
+- **wp-admin notice** when Optima Express is registered but not in Kestrel mode. Soames
+  supports Kestrel only: legacy mode renders each page body on the server at request time,
+  which a static site can't do.
+
+### Fixed
+
+- **Front-end redirection sent Optima Express pages to a dead slug.** WordPress resolves a
+  virtual page to Optima Express's placeholder post, so a listing URL redirected to
+  `<frontend>/listingaddress/`. With Optima Express registered, a virtual page now keeps its
+  own path and query (the static site serves the same URL). Without it, the page goes to
+  the front-end home page.
+
 ## [1.2.1] — 2026-09-17
 
 A **PATCH**, not a minor: nothing the theme parses changed. No block markup, no settings key,

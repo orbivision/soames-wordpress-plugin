@@ -23,6 +23,7 @@ Soames site. It used to be the companion theme's `index.php`.
 |---|---|
 | Single post | `<frontend>/<posts-page-slug>/<post-path>` |
 | Page, Knowledge Base article, any other single item | `<frontend><path>` |
+| Optima Express virtual page (listing, search, report…) | `<frontend><request path + query>` when Optima Express is registered, else `<frontend>/` (ORBI-82) |
 | Archives, search, 404, front page | `<frontend>/` |
 
 All 302, deliberately — the destination is a user-configurable setting, and a 301 would be
@@ -73,6 +74,7 @@ attribute is a MAJOR. The e2e tests are the practical test of which one you're m
 
 | Plugin | Astro theme (npm) | Notes |
 |---|---|---|
+| `1.3.0` | `>= 0.1.18` (IDX: `>= 0.1.27`) | `optimaExpress` REST key + redirect fix for Optima Express virtual pages (ORBI-82). MINOR: an older theme ignores the key and renders the site exactly as before; only the Optima Express pages need `0.1.27`, the first theme that reads it. |
 | `1.2.1` | `>= 0.1.18` | Admin-only (ORBI-80): a wp-admin warning when the build hook fires late, plus `deploy/`. PATCH — nothing the theme parses changed, so it pairs with any `0.1.x` theme. |
 | `1.2.0` | `>= 0.1.24` | Blog Image field and the `blogImage` field on `Post` (ORBI-64). **Row added retroactively in 1.2.1** — 1.2.0 shipped without one. The pairing is real: `0.1.24` is the theme release that first reads `blogImage` (verified against the theme's git history), and an older theme renders no sidebar image. |
 | `1.1.0` | `>= 0.1.21` | New Soames Icon Header block (ORBI-63). MINOR, but the pairing is real in one direction: an older theme has no renderer for `wp-block-soames-icon-header`, so the block emits its div and leaves an empty gap. Everything else keeps working. |

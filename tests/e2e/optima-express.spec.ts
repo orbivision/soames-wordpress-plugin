@@ -109,3 +109,38 @@ test("registered but not in Kestrel mode warns the admin", async ({ page }) => {
     register(false);
   }
 });
+
+// Front-end redirection (ORBI-58) on a virtual page. WordPress resolves these to Optima
+// Express's placeholder post, whose permalink is meaningless — before this fix a listing URL
+// redirected to <frontend>/listingaddress/ (seen live on orbivision.net, 2026-09-24).
+test.describe("front-end redirect of a virtual page", () => {
+  const FRONTEND = "https://frontend.example";
+  const LISTING = "/homes-for-sale-details/3917-CANYON-GLEN-CIRCLE-AUSTIN-TX-78732/1449859/27/";
+
+  test.beforeAll(() => {
+    wpCli(["option", "update", "soames_frontend_url", FRONTEND]);
+    wpCli(["option", "update", "soames_frontend_redirect", "1"]);
+  });
+  test.afterAll(() => {
+    wpCli(["option", "delete", "soames_frontend_url"]);
+    wpCli(["option", "delete", "soames_frontend_redirect"]);
+  });
+
+  test("registered: keeps the request's own path and query", async ({ request }) => {
+    register(true);
+    try {
+      const res = await request.get(`${WP_BASE}${LISTING}?boardId=27`, { maxRedirects: 0 });
+      expect(res.status()).toBe(302);
+      expect(res.headers()["location"]).toBe(`${FRONTEND}${LISTING}?boardId=27`);
+    } finally {
+      register(false);
+    }
+  });
+
+  test("not registered: goes to the front-end home page, not a placeholder slug", async ({ request }) => {
+    register(false);
+    const res = await request.get(`${WP_BASE}${LISTING}`, { maxRedirects: 0 });
+    expect(res.status()).toBe(302);
+    expect(res.headers()["location"]).toBe(`${FRONTEND}/`);
+  });
+});

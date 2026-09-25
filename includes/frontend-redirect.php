@@ -59,6 +59,22 @@ function soames_frontend_redirect_target() {
 	}
 	$base = rtrim( $frontend, '/' );
 
+	// Optima Express virtual page (ORBI-82). WordPress resolves these to Optima Express's
+	// placeholder post, so get_permalink() below would yield a meaningless slug
+	// (/homes-for-sale-details/…/ → <frontend>/listingaddress/). The static site serves the
+	// same virtual-page URL itself through the theme's rewrites, so keep the request's own
+	// path and query — but only where Optima Express is registered; otherwise the static site
+	// has no IDX pages and the visitor belongs on its home page.
+	if ( get_query_var( 'ihf-type' ) ) {
+		if ( ! function_exists( 'soames_oe_enabled' ) || ! soames_oe_enabled() ) {
+			return $base . '/';
+		}
+		$uri   = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
+		$path  = (string) wp_parse_url( $uri, PHP_URL_PATH );
+		$query = (string) wp_parse_url( $uri, PHP_URL_QUERY );
+		return $base . '/' . ltrim( $path, '/' ) . ( $query !== '' ? '?' . $query : '' );
+	}
+
 	// Single post → the blog base the front end actually uses.
 	if ( is_singular( 'post' ) ) {
 		$path = (string) wp_parse_url( get_permalink(), PHP_URL_PATH );
