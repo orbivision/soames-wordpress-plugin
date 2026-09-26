@@ -31,5 +31,8 @@ function soames_plugin_rest_settings() {
         // The page chosen in Soames Settings → Knowledge Base page; drives the
         // /docs/ landing hero. null when unset (theme falls back to defaults).
         'docsPageId'      => $docs_page_id ?: null,
+        // Optima Express IDX: null unless it's active AND registered on this site
+        // (includes/optima-express.php). The theme builds IDX shells only when present.
+        'optimaExpress'   => soames_oe_settings_payload(),
     ];
 }

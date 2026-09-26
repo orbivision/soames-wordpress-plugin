@@ -3,7 +3,7 @@
  * Plugin Name:       Soames
  * Plugin URI:        https://soames.app
  * Description:       Site configuration, preview support, media assets, and WPGraphQL extensions for the Soames Astro theme.
- * Version:           1.2.1
+ * Version:           1.3.0
  * Requires at least: 6.5
  * Tested up to:      7.0
  * Requires PHP:      7.4
@@ -92,3 +92,4 @@ require_once SOAMES_PLUGIN_DIR . 'includes/build-hook.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/blocks.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/docs-cpt.php';
 require_once SOAMES_PLUGIN_DIR . 'includes/docs-ordering.php';
+require_once SOAMES_PLUGIN_DIR . 'includes/optima-express.php';
