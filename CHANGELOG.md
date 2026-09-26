@@ -9,6 +9,26 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.3.1] — 2026-09-26
+
+A **PATCH**: editor/admin behaviour only. No block markup, settings key, REST key or GraphQL
+field changed. Pairs with any `0.1.x` theme.
+
+### Fixed
+
+- **The block editor broke when a site's Site Address (home) is on a different host from its
+  WordPress Address (siteurl)** (ORBI-82). That split is the normal headless setup: the public
+  site lives at the static front end, and WordPress stays on its own host. It's also what makes
+  Optima Express register the front end as the site's address. WordPress builds `rest_url()`
+  from `home`, so the editor's REST root pointed at the front end, which has no `/wp-json`.
+  The editor drew from preloaded data and then couldn't load or save anything. REST URLs are
+  now rebuilt on the WordPress host.
+  - **Only when the hosts differ.** A scheme-only mismatch on the same host (`http` siteurl,
+    `https` home) is left exactly as WordPress built it. Rewriting it would hand the editor an
+    `http` REST root and cause mixed content.
+  - A `home` with a path loses the path as well as the host. Upgraded to `https` when the admin
+    request is https.
+
 ## [1.3.0] — 2026-09-25
 
 A **MINOR**: one new REST key and one admin notice. No block markup, GraphQL field, or
