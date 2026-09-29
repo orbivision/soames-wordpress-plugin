@@ -108,7 +108,9 @@ leaks in.
 
 **`deploy/soames-wp-cron` is a restore recipe, not a synced copy. The server is
 authoritative.** It was transcribed from the live `/etc/cron.d/soames-wp-cron` on
-**2026-09-17** and matched it byte for byte (1357 bytes). Nothing keeps the two in
+**2026-09-17** and matched it byte for byte (1357 bytes). On **2026-09-29** (ORBI-82) it
+gained the `optima-express.orbivision.net` entry and a corrected comment; that exact file was
+installed back onto the server and the two matched by SHA-256 (1749 bytes). Nothing keeps the two in
 step, so treat a disagreement as the repo being stale — and re-verify before relying
 on it.
 
