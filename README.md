@@ -74,6 +74,7 @@ attribute is a MAJOR. The e2e tests are the practical test of which one you're m
 
 | Plugin | Astro theme (npm) | Notes |
 |---|---|---|
+| `1.3.3` | `>= 0.1.18` (IDX: `>= 0.1.27`) | 1.3.2's activation fix now survives a domain-mapping `admin_url` filter (runs last) (ORBI-82). PATCH. |
 | `1.3.2` | `>= 0.1.18` (IDX: `>= 0.1.27`) | Optima Express activation reports the ajax URL on home's origin under a split home, so Kestrel's host check passes on a headless front end (ORBI-82). Interim until Optima Express does this itself. PATCH. |
 | `1.3.1` | `>= 0.1.18` (IDX: `>= 0.1.27`) | Editor fix when Site Address (home) and WordPress Address (siteurl) are on different hosts (ORBI-82). PATCH — nothing the theme parses changed. |
 | `1.3.0` | `>= 0.1.18` (IDX: `>= 0.1.27`) | `optimaExpress` REST key + redirect fix for Optima Express virtual pages (ORBI-82). MINOR: an older theme ignores the key and renders the site exactly as before; only the Optima Express pages need `0.1.27`, the first theme that reads it. |

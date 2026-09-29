@@ -9,6 +9,20 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.3.3] — 2026-09-29
+
+A **PATCH**. Pairs with any `0.1.x` theme.
+
+### Fixed
+
+- **1.3.2's activation fix did nothing on a multisite with domain mapping** (ORBI-82). WordPress
+  MU Domain Mapping's `domain_mapping_adminurl` also filters `admin_url` at priority 10. It was
+  registered later, so it ran after ours and rewrote the ajax URL back to the admin domain.
+  wp-env has no domain mapping, which is why 1.3.2's tests passed. The filter now runs at
+  `PHP_INT_MAX`, which is safe given its narrow scope. A new test registers a competing
+  priority-10 filter that restores the WordPress host, the way the domain mapper does. With the
+  old priority it reproduces the live failure exactly.
+
 ## [1.3.2] — 2026-09-28
 
 A **PATCH**: it changes only what Optima Express reports when it activates. No block markup,

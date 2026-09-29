@@ -169,6 +169,19 @@ test.describe("activation reports the ajax URL on home's origin under a split ho
     }
   });
 
+  test("hosts differ: a later admin_url filter (e.g. domain mapping) can't undo it", () => {
+    // WordPress MU Domain Mapping's domain_mapping_adminurl sits at priority 10 and rewrites every
+    // admin_url() back to the admin domain; registered after ours it ran last and undid this on
+    // the live multisite, while wp-env (no domain mapping) passed. Simulate it in the same process.
+    setHome("https://frontend.example");
+    try {
+      const out = wpEval(`add_filter('admin_url', function ($u) { return preg_replace('#^https?://[^/]+#', '${WP_BASE}', $u); }, 10); echo iHomefinderUrlFactory::getInstance()->getAjaxBaseUrl();`).trim();
+      expect(out).toBe("https://frontend.example/wp-admin/admin-ajax.php");
+    } finally {
+      setHome(WP_BASE);
+    }
+  });
+
   test("hosts differ: every other admin_url('admin-ajax.php') stays on WordPress", () => {
     // wp-admin's own ajaxurl must not move: admin AJAX on the front end would go cross-origin
     // without WordPress's auth cookies.
