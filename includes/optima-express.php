@@ -170,6 +170,7 @@ add_action( 'admin_notices', function () {
 //     comes from Optima Express's getAjaxBaseUrl() — in 8.7.7 its single caller is the activation
 //     request. wp-admin's own ajaxurl and every other admin_url() are untouched: moving those to
 //     the front end would send admin AJAX cross-origin without WordPress's auth cookies.
+//   - runs last (PHP_INT_MAX) so a domain-mapping admin_url filter can't undo it.
 //   - fails safe: if Optima Express renames that method, this stops matching and activation
 //     reports what it always did. Once Optima Express takes the host from home, the rewrite
 //     produces the value it already has, so it becomes a no-op — remove it then.
@@ -178,7 +179,11 @@ add_action( 'admin_notices', function () {
 //
 // Takes effect at the next activation: re-save Optima Express's activation page.
 
-add_filter( 'admin_url', 'soames_oe_activation_ajax_url', 10, 2 );
+// PHP_INT_MAX: runs after everything else on admin_url. A domain-mapping plugin (e.g. WordPress
+// MU Domain Mapping's domain_mapping_adminurl, also at 10 and registered later) rewrites every
+// admin_url() back to the admin domain, which undid this at the default priority on a live
+// multisite. The scope is narrow enough that having the last word here is safe.
+add_filter( 'admin_url', 'soames_oe_activation_ajax_url', PHP_INT_MAX, 2 );
 
 function soames_oe_activation_ajax_url( $url, $path ) {
 	if ( $path !== 'admin-ajax.php' || ! class_exists( 'iHomefinderUrlFactory' ) ) {
