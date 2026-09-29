@@ -144,3 +144,39 @@ test.describe("front-end redirect of a virtual page", () => {
     expect(res.headers()["location"]).toBe(`${FRONTEND}/`);
   });
 });
+
+// Interim until Optima Express takes the activation ajax URL's host from home (ORBI-82). Kestrel
+// checks the page URL against a base derived from that ajax URL, whose host otherwise comes from
+// siteurl — a host a headless site's visitors never load.
+test.describe("activation reports the ajax URL on home's origin under a split home", () => {
+  const ajaxBase = () => wpEval(`echo iHomefinderUrlFactory::getInstance()->getAjaxBaseUrl();`).trim();
+  const plainAdminAjax = () => wpEval(`echo admin_url('admin-ajax.php');`).trim();
+  const setHome = (url: string) => wpCli(["config", "set", "WP_HOME", url]);
+
+  test.afterAll(() => setHome(WP_BASE));
+
+  test("hosts match: Optima Express's ajax URL is unchanged", () => {
+    setHome(WP_BASE);
+    expect(ajaxBase()).toBe(`${WP_BASE}/wp-admin/admin-ajax.php`);
+  });
+
+  test("hosts differ: Optima Express's ajax URL moves to home's origin", () => {
+    setHome("https://frontend.example");
+    try {
+      expect(ajaxBase()).toBe("https://frontend.example/wp-admin/admin-ajax.php");
+    } finally {
+      setHome(WP_BASE);
+    }
+  });
+
+  test("hosts differ: every other admin_url('admin-ajax.php') stays on WordPress", () => {
+    // wp-admin's own ajaxurl must not move: admin AJAX on the front end would go cross-origin
+    // without WordPress's auth cookies.
+    setHome("https://frontend.example");
+    try {
+      expect(plainAdminAjax()).toBe(`${WP_BASE}/wp-admin/admin-ajax.php`);
+    } finally {
+      setHome(WP_BASE);
+    }
+  });
+});

@@ -154,3 +154,63 @@ add_action( 'admin_notices', function () {
 		. esc_html__( 'Soames: Optima Express is registered on this site but is not in Kestrel mode, so the static site will not build any IDX pages. Soames supports Kestrel mode only.', 'soames' )
 		. '</p></div>';
 } );
+
+// ── Activation reports the front end's origin (interim; ORBI-82) ─────────────────────────────
+//
+// Kestrel refuses to render unless the page URL starts with the account's stored base URL, and
+// for WordPress accounts that base is derived from the ajax URL Optima Express sends when it
+// activates: admin_url('admin-ajax.php') — whose HOST comes from siteurl. On a headless site
+// home (the public front end) and siteurl (WordPress) are different hosts, so the stored base is
+// a host visitors never load and every IDX page on the front end fails the check. Taking that
+// host from home is a known open issue in Optima Express itself; until it ships, this reports the
+// ajax URL on home's origin instead.
+//
+// Deliberately narrow:
+//   - only for 'admin-ajax.php', only when home and siteurl hosts differ, and only when the call
+//     comes from Optima Express's getAjaxBaseUrl() — in 8.7.7 its single caller is the activation
+//     request. wp-admin's own ajaxurl and every other admin_url() are untouched: moving those to
+//     the front end would send admin AJAX cross-origin without WordPress's auth cookies.
+//   - fails safe: if Optima Express renames that method, this stops matching and activation
+//     reports what it always did. Once Optima Express takes the host from home, the rewrite
+//     produces the value it already has, so it becomes a no-op — remove it then.
+//   - the reported endpoint should really exist: the static site proxies /wp-admin/admin-ajax.php
+//     to WordPress (see the darst.app _redirects for the pattern).
+//
+// Takes effect at the next activation: re-save Optima Express's activation page.
+
+add_filter( 'admin_url', 'soames_oe_activation_ajax_url', 10, 2 );
+
+function soames_oe_activation_ajax_url( $url, $path ) {
+	if ( $path !== 'admin-ajax.php' || ! class_exists( 'iHomefinderUrlFactory' ) ) {
+		return $url;
+	}
+	$home = wp_parse_url( home_url() );
+	$site = wp_parse_url( site_url() );
+	if ( empty( $home['host'] ) || empty( $site['host'] ) ) {
+		return $url;
+	}
+	$home_host = strtolower( $home['host'] ) . ( isset( $home['port'] ) ? ':' . $home['port'] : '' );
+	$site_host = strtolower( $site['host'] ) . ( isset( $site['port'] ) ? ':' . $site['port'] : '' );
+	if ( $home_host === $site_host || ! soames_oe_called_from_ajax_base_url() ) {
+		return $url;
+	}
+	// home's full origin — scheme AND host — since that is what visitors load and what Kestrel
+	// compares the page URL against.
+	$u = wp_parse_url( $url );
+	return ( isset( $home['scheme'] ) ? $home['scheme'] : 'https' ) . '://' . $home_host
+		. ( isset( $u['path'] ) ? $u['path'] : '/wp-admin/admin-ajax.php' )
+		. ( isset( $u['query'] ) ? '?' . $u['query'] : '' );
+}
+
+/** True when admin_url() was called by iHomefinderUrlFactory::getAjaxBaseUrl(). */
+function soames_oe_called_from_ajax_base_url() {
+	// admin_url → get_admin_url → apply_filters → this filter; the caller sits a few frames up.
+	foreach ( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 8 ) as $frame ) {
+		if ( isset( $frame['class'], $frame['function'] )
+			&& $frame['class'] === 'iHomefinderUrlFactory'
+			&& $frame['function'] === 'getAjaxBaseUrl' ) {
+			return true;
+		}
+	}
+	return false;
+}

@@ -9,6 +9,27 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.3.2] — 2026-09-28
+
+A **PATCH**: it changes only what Optima Express reports when it activates. No block markup,
+settings key, REST key or GraphQL field changed. Pairs with any `0.1.x` theme.
+
+### Fixed
+
+- **Optima Express pages failed with `BaseUrlMismatchError` on a headless front end**
+  (ORBI-82). Kestrel only renders when the page URL starts with the account's stored base URL.
+  For WordPress accounts that base comes from the ajax URL Optima Express sends at activation,
+  and its host comes from **siteurl**: the WordPress host, which a headless site's visitors
+  never load. When home and siteurl are on different hosts, that one URL is now reported on
+  home's origin instead.
+  - **Deliberately narrow.** Only `admin-ajax.php`, only under a split home, and only when the
+    caller is Optima Express's `getAjaxBaseUrl()` (in 8.7.7 its one caller is the activation
+    request). wp-admin's own `ajaxurl` and every other `admin_url()` are unchanged.
+  - **An interim fix.** Taking that host from home is an open issue in Optima Express itself.
+    Once it ships, this becomes a no-op and should be removed.
+  - **Takes effect at the next activation.** Re-save Optima Express's activation page. The static
+    site should proxy `/wp-admin/admin-ajax.php` to WordPress so the reported endpoint exists.
+
 ## [1.3.1] — 2026-09-26
 
 A **PATCH**: editor/admin behaviour only. No block markup, settings key, REST key or GraphQL
