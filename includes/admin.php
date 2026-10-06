@@ -129,6 +129,12 @@ function soames_register_settings() {
         'sanitize_callback' => 'absint',
         'default'           => 0,
     ] );
+    // ORBI-82: hero for Optima Express landing pages (search, featured, reports…).
+    register_setting( 'soames_options', 'soames_idx_page_id', [
+        'type'              => 'integer',
+        'sanitize_callback' => 'absint',
+        'default'           => 0,
+    ] );
     register_setting( 'soames_options', 'soames_build_hook_url', [
         'type'              => 'string',
         'sanitize_callback' => 'esc_url_raw',
@@ -258,6 +264,31 @@ function soames_settings_page() {
                         </p>
                     </td>
                 </tr>
+                <?php if ( function_exists( 'soames_oe_enabled' ) && soames_oe_enabled() ) : ?>
+                <tr>
+                    <th scope="row">
+                        <label for="soames_idx_page_id">Optima Express page</label>
+                    </th>
+                    <td>
+                        <?php
+                        wp_dropdown_pages( [
+                            'name'              => 'soames_idx_page_id',
+                            'id'                => 'soames_idx_page_id',
+                            'selected'          => (int) get_option( 'soames_idx_page_id' ),
+                            'show_option_none'  => '— None —',
+                            'option_none_value' => 0,
+                        ] );
+                        ?>
+                        <p class="description">
+                            Supplies the hero background image, caption and overlay for the
+                            Optima Express landing pages (search, featured listings, market
+                            reports, agent and office lists). Each page keeps its own title.
+                            Listing and other detail pages get a slim title bar instead.
+                            Leave as “— None —” to give every IDX page the title bar.
+                        </p>
+                    </td>
+                </tr>
+                <?php endif; ?>
                 <tr>
                     <th scope="row">
                         <label for="soames_build_hook_url">Netlify build hook URL</label>
