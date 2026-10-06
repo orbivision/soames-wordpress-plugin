@@ -71,6 +71,35 @@ test("active and registered: payload carries the Kestrel config and the routes",
   }
 });
 
+test("heroPageId: null until an Optima Express page is chosen, then that page's ID", async ({ request }) => {
+  register(true);
+  const pageId = wpEval(`echo wp_insert_post(['post_type' => 'page', 'post_title' => 'IDX hero', 'post_status' => 'publish']);`).trim();
+  try {
+    expect((await (await request.get(SETTINGS_URL)).json()).optimaExpress.heroPageId).toBeNull();
+    wpCli(["option", "update", "soames_idx_page_id", pageId]);
+    expect((await (await request.get(SETTINGS_URL)).json()).optimaExpress.heroPageId).toBe(Number(pageId));
+  } finally {
+    wpCli(["option", "delete", "soames_idx_page_id"]);
+    wpCli(["post", "delete", pageId, "--force"]);
+    register(false);
+  }
+});
+
+test("the Optima Express page picker shows only where Optima Express is registered", async ({ page }) => {
+  await login(page);
+  register(false);
+  await page.goto(`${WP_BASE}/wp-admin/admin.php?page=soames-settings`);
+  await expect(page.locator("#soames_docs_page_id")).toBeVisible();
+  await expect(page.locator("#soames_idx_page_id")).toHaveCount(0);
+  register(true);
+  try {
+    await page.goto(`${WP_BASE}/wp-admin/admin.php?page=soames-settings`);
+    await expect(page.locator("#soames_idx_page_id")).toBeVisible();
+  } finally {
+    register(false);
+  }
+});
+
 test("an admin's customised slug flows through, because routes come from the rewrite table", async ({ request }) => {
   register(true);
   wpEval(`update_option('ihf-virtual-page-permalink-text-detail', 'e2e-listing');`);

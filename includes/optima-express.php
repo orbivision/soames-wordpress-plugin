@@ -138,6 +138,8 @@ function soames_oe_settings_payload() {
 		],
 		'routes'       => $routes['routes'],
 		'skippedRules' => $routes['skipped'],
+		// Soames Settings → Optima Express page: hero image/caption/overlay for landing types.
+		'heroPageId'   => (int) get_option( 'soames_idx_page_id' ) ?: null,
 	];
 }
 
