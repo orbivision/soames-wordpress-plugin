@@ -9,6 +9,21 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-10-05
+
+A **MINOR**: one new setting and one new key inside the `optimaExpress` payload. Nothing an older
+theme reads changed. Pairs with any `0.1.x` theme; the IDX heroes need `0.1.28`.
+
+### Added
+
+- **Optima Express page** setting (ORBI-82). It's a page picker in Soames Settings, shown only
+  where Optima Express is registered, and works like the Knowledge Base page. The chosen page's
+  hero background image, caption and overlay become the hero for the Optima Express *landing*
+  pages: search, featured listings, results, market reports, agent and office lists. Each keeps
+  its own title. Listing and other detail pages get a slim title bar instead, so the listing
+  stays above the fold. The ID is sent as `optimaExpress.heroPageId`, inside the gated payload,
+  so subsites without a registered Optima Express never see it.
+
 ## [1.3.3] — 2026-09-29
 
 A **PATCH**. Pairs with any `0.1.x` theme.
