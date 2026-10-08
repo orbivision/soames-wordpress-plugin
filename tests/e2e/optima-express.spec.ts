@@ -91,11 +91,40 @@ test("the Optima Express page picker shows only where Optima Express is register
   await page.goto(`${WP_BASE}/wp-admin/admin.php?page=soames-settings`);
   await expect(page.locator("#soames_docs_page_id")).toBeVisible();
   await expect(page.locator("#soames_idx_page_id")).toHaveCount(0);
+  await expect(page.locator("#soames_edge_secret")).toHaveCount(0);
   register(true);
   try {
     await page.goto(`${WP_BASE}/wp-admin/admin.php?page=soames-settings`);
     await expect(page.locator("#soames_idx_page_id")).toBeVisible();
+    await expect(page.locator("#soames_edge_secret")).toBeVisible();
   } finally {
+    register(false);
+  }
+});
+
+test("the edge secret and redirect type save through the real settings form", async ({ page }) => {
+  // register_setting() is what lets options.php accept a field at all; a sanitizer test alone
+  // would pass with the setting unregistered and the form silently dropping it.
+  const secret = "e2e-form-secret-0123456789abcdefghijklmnop";
+  await login(page);
+  register(true);
+  try {
+    await page.goto(`${WP_BASE}/wp-admin/admin.php?page=soames-settings`);
+    await page.fill("#soames_edge_secret", secret);
+    await page.selectOption("#soames_frontend_redirect_status", "301");
+    await page.click("#submit");
+    await expect(page.locator(".notice", { hasText: "Settings saved." })).toBeVisible();
+    expect(wpCli(["option", "get", "soames_edge_secret"])).toBe(secret);
+    expect(wpCli(["option", "get", "soames_frontend_redirect_status"])).toBe("301");
+
+    // Too short: rejected with an error, the stored value kept.
+    await page.fill("#soames_edge_secret", "short");
+    await page.click("#submit");
+    await expect(page.locator(".notice-error", { hasText: "at least 32 characters" })).toBeVisible();
+    expect(wpCli(["option", "get", "soames_edge_secret"])).toBe(secret);
+  } finally {
+    wpCli(["option", "delete", "soames_edge_secret"]);
+    wpCli(["option", "delete", "soames_frontend_redirect_status"]);
     register(false);
   }
 });

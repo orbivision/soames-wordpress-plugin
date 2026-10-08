@@ -28,6 +28,18 @@ function soames_frontend_redirect_enabled() {
 }
 
 /**
+ * HTTP status for the redirect: 302 unless the site opted into 301.
+ *
+ * 302 is the default because the destination is a user-configurable setting: a 301 is cached
+ * hard by browsers and CDNs, so changing the Frontend Site URL later would strand everyone who
+ * ever hit the old one. A 301 is the opt-in for a site that is deliberately retiring this host as
+ * a public duplicate (ORBI-82): search engines consolidate on a 301 faster.
+ */
+function soames_frontend_redirect_status() {
+	return get_option( 'soames_frontend_redirect_status', '302' ) === '301' ? 301 : 302;
+}
+
+/**
  * Slug the front end serves the blog under.
  *
  * Mirrors soames-astro-theme's integration.ts, WHICH IS THE POINT: that resolves the base
@@ -103,6 +115,12 @@ function soames_frontend_redirect_target() {
  * @return bool True to leave the request alone.
  */
 function soames_frontend_redirect_should_skip() {
+	// The front end's own edge fetching this page server-side (ORBI-82, includes/edge.php).
+	// Redirecting it would send it back to the front end it came from.
+	if ( soames_is_edge_request() ) {
+		return true;
+	}
+
 	// Not a front-end page view at all.
 	if ( is_admin() || wp_doing_ajax() || wp_doing_cron() ) {
 		return true;
@@ -173,9 +191,6 @@ function soames_frontend_redirect() {
 		return;
 	}
 
-	// 302 throughout, including the catch-all the theme sent as a 301. The destination is a
-	// user-configurable setting: a 301 is cached hard by browsers and CDNs, so changing the
-	// frontend URL later would strand everyone who ever hit the old one.
-	wp_redirect( $target, 302 );
+	wp_redirect( $target, soames_frontend_redirect_status() );
 	exit;
 }

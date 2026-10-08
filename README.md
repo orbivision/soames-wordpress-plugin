@@ -26,8 +26,11 @@ Soames site. It used to be the companion theme's `index.php`.
 | Optima Express virtual page (listing, search, report…) | `<frontend><request path + query>` when Optima Express is registered, else `<frontend>/` (ORBI-82) |
 | Archives, search, 404, front page | `<frontend>/` |
 
-All 302, deliberately — the destination is a user-configurable setting, and a 301 would be
-cached hard by browsers and CDNs, stranding visitors if the Frontend Site URL ever changes.
+302 by default, deliberately: the destination is a user-configurable setting, and a 301 would
+be cached hard by browsers and CDNs, stranding visitors if the Frontend Site URL ever changes.
+**Redirect type** under Soames → Settings opts a site into 301 (ORBI-82). That's for a site
+deliberately retiring its WordPress host as a public duplicate, because search engines
+consolidate on a 301 sooner.
 The blog base comes from WordPress's "Posts page" setting, mirroring `integration.ts` in the
 Astro theme (including its `blog` fallback) so the two sides can't disagree.
 
@@ -42,6 +45,24 @@ broken WordPress.
 Two off-switches: the **Front-end redirection** checkbox under Soames → Settings, and the
 `soames_frontend_redirect_target` filter for anything the exclusions don't anticipate (return
 `''` to leave a request alone).
+
+### Edge bypass (ORBI-82)
+
+A static front end's edge function can fetch WordPress pages server-side even while every
+visitor is redirected. Today that means Optima Express listing heads, which only WordPress can
+build. `includes/edge.php` lets a request carrying `X-Soames-Edge: <secret>` skip this redirect
+**and** WordPress's own `redirect_canonical`. The secret is the **Edge secret** setting (shown
+where Optima Express is registered; at least 32 characters, no whitespace), and the front end
+holds the same value in its own environment (`SOAMES_EDGE_SECRET` on Netlify).
+
+- No secret configured → the header is ignored. Wrong secret → identical to no header.
+  Constant-time compare.
+- The secret is in no REST or GraphQL payload (`show_in_rest: false`, and not in
+  `soames/v1/settings`).
+- A bypassed response is sent `no-cache` and `X-Robots-Tag: noindex`, so if a page cache or a
+  crawler ever gets hold of one, it neither persists nor indexes.
+
+Asserted in `tests/e2e/edge.spec.ts`.
 
 ## Versioning (ORBI-57)
 
@@ -74,6 +95,7 @@ attribute is a MAJOR. The e2e tests are the practical test of which one you're m
 
 | Plugin | Astro theme (npm) | Notes |
 |---|---|---|
+| `1.5.0` | `>= 0.1.18` | Edge bypass (`X-Soames-Edge` + Edge secret) and an opt-in 301 for front-end redirection (ORBI-82). MINOR: new settings only, and nothing a theme reads changed; the theme's edge function that uses the bypass comes in a later version. |
 | `1.4.0` | `>= 0.1.18` (IDX heroes: `>= 0.1.28`) | "Optima Express page" setting → `optimaExpress.heroPageId` (ORBI-82). MINOR: older themes ignore it; `0.1.28` renders the landing-page heroes and slim title bars. |
 | `1.3.3` | `>= 0.1.18` (IDX: `>= 0.1.27`) | 1.3.2's activation fix now survives a domain-mapping `admin_url` filter (runs last) (ORBI-82). PATCH. |
 | `1.3.2` | `>= 0.1.18` (IDX: `>= 0.1.27`) | Optima Express activation reports the ajax URL on home's origin under a split home, so Kestrel's host check passes on a headless front end (ORBI-82). Interim until Optima Express does this itself. PATCH. |
@@ -204,6 +226,7 @@ renders nothing, and no screenshot test would notice.
 | `avatar.spec.ts` | ORBI-53 profile pictures: local avatar overrides Gravatar, users without one fall through, `force_default` bypasses, `show_avatars=0` nulls the GraphQL avatar, and the picker round-trips through the real profile form |
 | `nav-menus.spec.ts` | ORBI-60: the Knowledge Base panel is present on Appearance → Menus and lists articles; an article can be added to a menu and survives a save; and the un-hide happens **once** rather than being forced on every load, so a user who deliberately hides the panel keeps it hidden |
 | `redirect.spec.ts` | ORBI-58 front-end redirection: the post/page/docs mapping, the blog base following the Posts page slug, and every exclusion — **GraphQL**, REST, wp-admin, previews, `robots.txt` — plus both off-switches. Sets a frontend URL in `beforeAll` and clears it in `afterAll`, since the rest of the suite fetches rendered HTML from WordPress directly and would otherwise get 302s |
+| `edge.spec.ts` | ORBI-82 edge bypass: the right secret gets a `200` sent `noindex` + `no-cache`; no header, a wrong secret, or a header with no secret configured all get the ordinary redirect; it also skips `redirect_canonical`; the secret is in no public payload; the sanitizer rejects short or whitespace secrets; the redirect type is 302 by default and 301 only when opted in |
 | `admin.spec.ts` | Soames admin pages load without PHP notices; the Knowledge Base submenu stays nested and ordered; **the all-blocks post opens in the editor with no block-validation warnings** (the Block API v3 iframe regression class — ORBI-49) |
 
 ### Fixtures
