@@ -9,6 +9,26 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-10-08
+
+A **MINOR**: two new settings. Nothing a theme reads changed: no REST key, GraphQL field or
+block markup. Pairs with any `0.1.x` theme.
+
+### Added
+
+- **Edge bypass** (ORBI-82). A request carrying `X-Soames-Edge: <secret>` skips the front-end
+  redirect and WordPress's `redirect_canonical`. That lets a static site's edge function fetch a
+  page server-side (Optima Express listing heads) while every visitor is still redirected, so the
+  WordPress host stops being a crawlable duplicate.
+  - The secret is the new **Edge secret** setting, shown where Optima Express is registered,
+    at least 32 characters.
+  - No secret → the header is ignored; a wrong one is treated as absent.
+  - Never in REST or GraphQL.
+  - Bypassed responses are sent `no-cache` and `X-Robots-Tag: noindex`.
+- **Redirect type** setting for front-end redirection: 302 (default, unchanged) or 301. The 301
+  is for a site retiring its WordPress host as a public duplicate, since search engines
+  consolidate on a 301 sooner.
+
 ## [1.4.0] — 2026-10-05
 
 A **MINOR**: one new setting and one new key inside the `optimaExpress` payload. Nothing an older

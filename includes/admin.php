@@ -124,6 +124,20 @@ function soames_register_settings() {
         'sanitize_callback' => function ( $value ) { return $value ? '1' : '0'; },
         'default'           => '1',
     ] );
+    // ORBI-82: 301 instead of 302 for a site retiring this host as a public duplicate.
+    register_setting( 'soames_options', 'soames_frontend_redirect_status', [
+        'type'              => 'string',
+        'sanitize_callback' => function ( $value ) { return $value === '301' ? '301' : '302'; },
+        'default'           => '302',
+    ] );
+    // ORBI-82: shared secret that lets the front end's edge fetch pages without being
+    // redirected (includes/edge.php). Never exposed over REST or GraphQL.
+    register_setting( 'soames_options', 'soames_edge_secret', [
+        'type'              => 'string',
+        'sanitize_callback' => 'soames_sanitize_edge_secret',
+        'default'           => '',
+        'show_in_rest'      => false,
+    ] );
     register_setting( 'soames_options', 'soames_docs_page_id', [
         'type'              => 'integer',
         'sanitize_callback' => 'absint',
@@ -185,7 +199,7 @@ function soames_sanitize_frontend_url( $url ) {
 
 function soames_settings_page() {
     if ( isset( $_GET['settings-updated'] ) ) {
-        $errors = get_settings_errors( 'soames_frontend_url' );
+        $errors = array_merge( get_settings_errors( 'soames_frontend_url' ), get_settings_errors( 'soames_edge_secret' ) );
         if ( empty( $errors ) ) {
             add_settings_error( 'soames_messages', 'soames_saved', 'Settings saved.', 'updated' );
         }
@@ -196,6 +210,7 @@ function soames_settings_page() {
         <?php
         settings_errors( 'soames_messages' );
         settings_errors( 'soames_frontend_url' );
+        settings_errors( 'soames_edge_secret' );
         ?>
         <form method="post" action="options.php">
             <?php settings_fields( 'soames_options' ); ?>
@@ -245,6 +260,24 @@ function soames_settings_page() {
                 </tr>
                 <tr>
                     <th scope="row">
+                        <label for="soames_frontend_redirect_status">Redirect type</label>
+                    </th>
+                    <td>
+                        <?php $status = get_option( 'soames_frontend_redirect_status', '302' ); ?>
+                        <select id="soames_frontend_redirect_status" name="soames_frontend_redirect_status">
+                            <option value="302" <?php selected( $status, '302' ); ?>>302 — temporary (default)</option>
+                            <option value="301" <?php selected( $status, '301' ); ?>>301 — permanent</option>
+                        </select>
+                        <p class="description">
+                            Use 301 only when this WordPress address is being retired as a public
+                            copy of the front-end site: search engines consolidate on a 301 sooner.
+                            Browsers cache a 301 hard, so visitors who followed one keep going to
+                            the old Frontend Site URL even after you change it.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
                         <label for="soames_docs_page_id">Knowledge Base page</label>
                     </th>
                     <td>
@@ -285,6 +318,30 @@ function soames_settings_page() {
                             reports, agent and office lists). Each page keeps its own title.
                             Listing and other detail pages get a slim title bar instead.
                             Leave as “— None —” to give every IDX page the title bar.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="soames_edge_secret">Edge secret</label>
+                    </th>
+                    <td>
+                        <input
+                            type="password"
+                            id="soames_edge_secret"
+                            name="soames_edge_secret"
+                            value="<?php echo esc_attr( get_option( 'soames_edge_secret', '' ) ); ?>"
+                            class="regular-text code"
+                            autocomplete="off"
+                            spellcheck="false"
+                        />
+                        <p class="description">
+                            Lets the front-end site's edge fetch Optima Express pages from
+                            WordPress without being redirected, so search engines see each
+                            listing's own title and description. Use a random value of at least
+                            <?php echo (int) SOAMES_EDGE_SECRET_MIN_LENGTH; ?> characters, and set
+                            the same value as <code>SOAMES_EDGE_SECRET</code> in the front-end
+                            site's Netlify environment variables. Leave blank to turn it off.
                         </p>
                     </td>
                 </tr>
