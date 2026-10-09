@@ -9,6 +9,21 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-10-09
+
+A **MINOR**: one new REST route. Nothing an existing theme reads changed. Pairs with any `0.1.x`
+theme; the theme serves the listing sitemaps from `0.1.32`.
+
+### Added
+
+- **`GET soames/v1/optima-express/sitemap`** (ORBI-82): the Optima Express listing URLs, as
+  `{ count, urls: [{ loc, lastmod }] }`.
+  - Optima Express has no sitemap of its own; it only feeds these URLs to Google XML Sitemaps
+    or Yoast, which a static front end doesn't have.
+  - This makes the same request through Optima Express's public requestor class, so its
+    server-side credentials never leave WordPress, with the same 1-hour cache.
+  - Gated like the settings payload: 404 unless Optima Express is active and registered.
+
 ## [1.5.0] — 2026-10-08
 
 A **MINOR**: two new settings. Nothing a theme reads changed: no REST key, GraphQL field or

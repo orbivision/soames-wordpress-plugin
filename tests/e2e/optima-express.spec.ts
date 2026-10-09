@@ -251,3 +251,41 @@ test.describe("activation reports the ajax URL on home's origin under a split ho
     }
   });
 });
+
+// ORBI-82 Phase 4: the listing sitemap. The remote request itself can't run here (a dummy token
+// gets no sitemap), so the endpoint's gate is asserted over HTTP and the response handling
+// directly, with the three shapes Optima Express's requestor can hand back.
+test.describe("listing sitemap", () => {
+  const URL_ = `${WP_BASE}/wp-json/soames/v1/optima-express/sitemap`;
+
+  test("not registered: 404", async ({ request }) => {
+    register(false);
+    const res = await request.get(URL_);
+    expect(res.status()).toBe(404);
+    expect((await res.json()).code).toBe("soames_oe_not_enabled");
+  });
+
+  test("normalizes XML, JSON array, single JSON object and empty urlset; rejects a non-sitemap", () => {
+    const out = wpEval(`
+      $xml = simplexml_load_string('<r><sitemap><urlset><url><loc> https://x.test/a/1/27/ </loc><lastmod>2026-10-01</lastmod></url><url><loc>https://x.test/b/2/27/</loc></url><url><loc></loc></url></urlset></sitemap></r>');
+      $arr = json_decode('{"sitemap":{"urlset":{"url":[{"loc":"https://x.test/c/3/27/","lastmod":""},{"loc":"https://x.test/d/4/27/"}]}}}');
+      $one = json_decode('{"sitemap":{"urlset":{"url":{"loc":"https://x.test/e/5/27/","lastmod":"2026-10-02"}}}}');
+      $empty = simplexml_load_string('<r><sitemap><urlset></urlset></sitemap></r>');
+      echo wp_json_encode([
+        soames_oe_sitemap_normalize($xml),
+        soames_oe_sitemap_normalize($arr),
+        soames_oe_sitemap_normalize($one),
+        soames_oe_sitemap_normalize($empty),
+        soames_oe_sitemap_normalize(json_decode('{"error":"x"}')),
+        soames_oe_sitemap_normalize(null),
+      ]);`);
+    expect(JSON.parse(out)).toEqual([
+      [{ loc: "https://x.test/a/1/27/", lastmod: "2026-10-01" }, { loc: "https://x.test/b/2/27/", lastmod: null }],
+      [{ loc: "https://x.test/c/3/27/", lastmod: null }, { loc: "https://x.test/d/4/27/", lastmod: null }],
+      [{ loc: "https://x.test/e/5/27/", lastmod: "2026-10-02" }],
+      [],
+      null,
+      null,
+    ]);
+  });
+});
