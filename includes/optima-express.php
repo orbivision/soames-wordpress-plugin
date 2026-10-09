@@ -221,3 +221,61 @@ function soames_oe_called_from_ajax_base_url() {
 	}
 	return false;
 }
+
+// ── Listing sitemap (ORBI-82 Phase 4) ─────────────────────────────────────────
+//
+// Optima Express has no sitemap of its own: iHomefinderAdmin::getSitemap() (private) asks the
+// remote service for the account's listing URLs and hands them only to Google XML Sitemaps or
+// Yoast. A static front end has neither, so this exposes the same list. It's the same request,
+// made through Optima Express's own public requestor class, so its server-side credentials never
+// leave WordPress, and with the same 1-hour cache. The response carries listing URLs and nothing
+// else; they're public pages.
+
+add_action( 'rest_api_init', function () {
+	register_rest_route( 'soames/v1', '/optima-express/sitemap', [
+		'methods'             => 'GET',
+		'callback'            => 'soames_oe_rest_sitemap',
+		'permission_callback' => '__return_true',
+	] );
+} );
+
+/**
+ * The remote sitemap response → [ [ 'loc' => string, 'lastmod' => string|null ], … ].
+ *
+ * The requestor decodes XML with SimpleXML and anything else with json_decode, so `url` may be
+ * a SimpleXMLElement (iterating it yields each <url>), an array, or — JSON with one entry — a
+ * single object. Returns null when the response isn't a sitemap at all; an empty urlset is [].
+ */
+function soames_oe_sitemap_normalize( $response ) {
+	if ( ! is_object( $response ) || ! isset( $response->sitemap ) || ! isset( $response->sitemap->urlset ) ) {
+		return null;
+	}
+	$urls = isset( $response->sitemap->urlset->url ) ? $response->sitemap->urlset->url : [];
+	$list = ( is_array( $urls ) || $urls instanceof Traversable ) ? $urls : [ $urls ];
+	$out  = [];
+	foreach ( $list as $url ) {
+		$loc = trim( (string) ( $url->loc ?? '' ) );
+		if ( $loc === '' ) {
+			continue;
+		}
+		$lastmod = trim( (string) ( $url->lastmod ?? '' ) );
+		$out[]   = [ 'loc' => $loc, 'lastmod' => $lastmod !== '' ? $lastmod : null ];
+	}
+	return $out;
+}
+
+function soames_oe_rest_sitemap() {
+	// Same gate as the settings payload: a subsite without a registered Optima Express has no
+	// listings to list, and shouldn't make the remote request at all.
+	if ( ! soames_oe_enabled() ) {
+		return new WP_Error( 'soames_oe_not_enabled', 'Optima Express is not active and registered on this site.', [ 'status' => 404 ] );
+	}
+	$request = new iHomefinderRequestor();
+	$request->addParameter( 'requestType', 'sitemap' )->setCacheExpiration( HOUR_IN_SECONDS );
+	$remote = $request->remoteGetRequest();
+	$urls   = soames_oe_sitemap_normalize( is_object( $remote ) ? $remote->getResponse() : null );
+	if ( $urls === null ) {
+		return new WP_Error( 'soames_oe_sitemap_unavailable', 'Optima Express returned no sitemap.', [ 'status' => 502 ] );
+	}
+	return [ 'count' => count( $urls ), 'urls' => $urls ];
+}

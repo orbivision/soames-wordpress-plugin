@@ -95,6 +95,7 @@ attribute is a MAJOR. The e2e tests are the practical test of which one you're m
 
 | Plugin | Astro theme (npm) | Notes |
 |---|---|---|
+| `1.6.0` | `>= 0.1.18` (listing sitemaps: `>= 0.1.32`) | `GET soames/v1/optima-express/sitemap`: Optima Express listing URLs for a static front end's sitemaps (ORBI-82). MINOR: a new route only. |
 | `1.5.0` | `>= 0.1.18` | Edge bypass (`X-Soames-Edge` + Edge secret) and an opt-in 301 for front-end redirection (ORBI-82). MINOR: new settings only, and nothing a theme reads changed; the theme's edge function that uses the bypass comes in a later version. |
 | `1.4.0` | `>= 0.1.18` (IDX heroes: `>= 0.1.28`) | "Optima Express page" setting → `optimaExpress.heroPageId` (ORBI-82). MINOR: older themes ignore it; `0.1.28` renders the landing-page heroes and slim title bars. |
 | `1.3.3` | `>= 0.1.18` (IDX: `>= 0.1.27`) | 1.3.2's activation fix now survives a domain-mapping `admin_url` filter (runs last) (ORBI-82). PATCH. |
