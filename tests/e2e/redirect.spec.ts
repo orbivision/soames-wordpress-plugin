@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { fixtures, wpCli, wpEval, GRAPHQL_URL, WP_BASE } from "./wp";
+import { fixtures, login, wpCli, wpEval, GRAPHQL_URL, WP_BASE } from "./wp";
 
 // ORBI-58 — front-end redirection, moved out of the companion theme into the plugin.
 //
@@ -113,8 +113,12 @@ test("the REST API is never redirected", async ({ request }) => {
   expect(res.status()).toBe(200);
 });
 
-test("a draft preview still goes to the front-end preview route", async ({ request }) => {
+test("a draft preview still goes to the front-end preview route", async ({ page }) => {
   // preview.php owns previews on this same hook; frontend-redirect must not swallow them.
+  //
+  // As an editor (ORBI-85). This test used to make the request anonymously and expect a token —
+  // which is to say it asserted the draft leak ORBI-85 closed. preview.spec.ts covers who may get
+  // a token; this one only cares that the redirect leaves an authorised preview alone.
   //
   // A DRAFT on purpose. WordPress's redirect_canonical rewrites `?p=<id>` on a *published*
   // post to its pretty permalink with a 301 before either handler runs, so the ?p= form
@@ -125,7 +129,8 @@ test("a draft preview still goes to the front-end preview route", async ({ reque
     ).trim()
   );
   try {
-    const res = await raw(request, `${WP_BASE}/?p=${draftId}&preview=true`);
+    await login(page);
+    const res = await page.request.get(`${WP_BASE}/?p=${draftId}&preview=true`, { maxRedirects: 0 });
     expect(res.status()).toBe(302);
     expect(res.headers()["location"]).toContain(`${FRONTEND}/preview/?token=`);
   } finally {

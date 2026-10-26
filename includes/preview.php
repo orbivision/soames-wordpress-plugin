@@ -16,6 +16,18 @@ function soames_preview_redirect() {
 
     if ( ! $id ) return;
 
+    // ORBI-85: only someone who can edit the post gets a token. Without this, an anonymous
+    // `?p=<draft id>&preview=true` was issued one, and the REST route below (public by design —
+    // the token IS the credential) handed back the draft's full content: any draft on the
+    // network, by iterating IDs. Editors click Preview from wp-admin on this same host, so
+    // their login cookie is on this request; anyone else is sent to log in, then back here.
+    if ( ! is_user_logged_in() ) {
+        auth_redirect();
+    }
+    if ( ! current_user_can( 'edit_post', $id ) ) {
+        wp_die( esc_html__( 'You are not allowed to preview this item.', 'soames' ), '', [ 'response' => 403 ] );
+    }
+
     $token = bin2hex( random_bytes( 16 ) );
     set_transient( 'soames_preview_' . $token, compact( 'id', 'type' ), 5 * MINUTE_IN_SECONDS );
 
@@ -74,6 +86,9 @@ function soames_rest_preview( WP_REST_Request $request ) {
                 'heroCaption'    => get_post_meta( $blog_page_id, 'soames_hero_caption', true ) ?: null,
                 'guid'           => $bp_thumb_src ? $bp_thumb_src[0] : null,
                 'overlayOpacity' => get_post_meta( $blog_page_id, 'soames_overlay_opacity', true ) ?: '0.6',
+                // ORBI-85: same field as GraphQL heroBackgroundImage, so the preview's hero
+                // resolves exactly as the built post's does (dedicated image, then `guid`).
+                'heroBackgroundImage' => soames_preview_image_url( $blog_page_id, 'soames_hero_bg_id' ),
             ];
         }
     }
@@ -90,5 +105,15 @@ function soames_rest_preview( WP_REST_Request $request ) {
         'overlayOpacity' => get_post_meta( $post->ID, 'soames_overlay_opacity', true ) ?: '0.6',
         'featuredImage'  => $featured_image,
         'blogHero'       => $blog_hero,
+        // ORBI-85: the two dedicated images the built pages use — the hero backdrop (any
+        // type) and the post sidebar image (posts only). Null when unset, as in GraphQL.
+        'heroBackgroundImage' => soames_preview_image_url( $post->ID, 'soames_hero_bg_id' ),
+        'blogImage'           => $data['type'] === 'post' ? soames_preview_image_url( $post->ID, 'soames_blog_image_id' ) : null,
     ];
+}
+
+/** Full-size URL of the attachment whose ID is stored in `$meta_key`, or null. */
+function soames_preview_image_url( $post_id, $meta_key ) {
+    $id = (int) get_post_meta( $post_id, $meta_key, true );
+    return $id ? ( wp_get_attachment_image_url( $id, 'full' ) ?: null ) : null;
 }

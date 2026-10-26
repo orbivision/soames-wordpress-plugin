@@ -9,6 +9,27 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-10-26
+
+A **MINOR** with a **security fix**: install it promptly. Two new REST keys; nothing an existing
+theme reads changed. Pairs with any `0.1.x` theme; Preview works again from `0.1.33`.
+
+### Security
+
+- **Preview tokens are now issued only to someone who can edit the post** (ORBI-85). Before,
+  an anonymous request for `/?p=<id>&preview=true` got a token for any draft, and
+  `GET soames/v1/preview?token=…` returned that draft's full content, so anyone could read
+  unpublished posts and pages by iterating IDs.
+  - Not logged in → sent to log in, then back to the preview.
+  - Logged in without `edit_post` on that item → 403.
+  - Editors clicking Preview in wp-admin see no change: their login cookie is on the request.
+
+### Added
+
+- **`heroBackgroundImage` and `blogImage` on the preview REST response**, plus
+  `blogHero.heroBackgroundImage`. These are the dedicated images the built pages use, so a
+  preview's hero and sidebar match the published page. Null when unset, as in GraphQL.
+
 ## [1.6.0] — 2026-10-09
 
 A **MINOR**: one new REST route. Nothing an existing theme reads changed. Pairs with any `0.1.x`
