@@ -95,6 +95,7 @@ attribute is a MAJOR. The e2e tests are the practical test of which one you're m
 
 | Plugin | Astro theme (npm) | Notes |
 |---|---|---|
+| `2.0.0` | `>= 0.1.39` with Optima Express; `>= 0.1.18` otherwise | **Security:** the Optima Express registration key is no longer in `soames/v1/settings`. `optimaExpress.kestrel` carries the public `authenticationToken` instead, and a rebuild is scheduled when it changes (ORBI-91). MAJOR: `kestrel.activationToken` removed, so a theme before `0.1.39` breaks the edge's displayability check. Sites without Optima Express are unaffected. |
 | `1.7.0` | `>= 0.1.18` (Preview: `>= 0.1.33`) | **Security:** preview tokens only for users who can edit the post (ORBI-85); before, anyone could read any draft. Adds `heroBackgroundImage` / `blogImage` to the preview REST response. MINOR: new keys only. Preview needs theme `0.1.33`, the first with a `/preview/` page. |
 | `1.6.0` | `>= 0.1.18` (listing sitemaps: `>= 0.1.32`) | `GET soames/v1/optima-express/sitemap`: Optima Express listing URLs for a static front end's sitemaps (ORBI-82). MINOR: a new route only. |
 | `1.5.0` | `>= 0.1.18` | Edge bypass (`X-Soames-Edge` + Edge secret) and an opt-in 301 for front-end redirection (ORBI-82). MINOR: new settings only, and nothing a theme reads changed; the theme's edge function that uses the bypass comes in a later version. |

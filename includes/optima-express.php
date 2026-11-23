@@ -5,8 +5,12 @@ defined( 'ABSPATH' ) || exit;
 //
 // A static site has no server at request time, so Optima Express's virtual pages can't be
 // rendered by WordPress for its visitors. What the theme needs at BUILD time is:
-//   - the Kestrel config the plugin would print in every page head (the activationToken is
-//     public by design — Optima Express emits it in every page it renders), and
+//   - the Kestrel config the plugin would print in every page head: the PUBLIC authentication
+//     token that registration returns, which Optima Express itself prints in every page it
+//     renders. NEVER the registration (activation) key: Optima Express 9.0.2+ treats that as a
+//     secret, and the service refuses a key once it has been public, after which no Optima
+//     Express admin save reaches the IDX account (ORBI-91). Up to 1.7.0 this payload carried the
+//     key, and two keys were refused because of it. And
 //   - the virtual-page URL patterns, so the build can emit one static shell per page type
 //     plus a rewrite from each pattern to its shell.
 //
@@ -14,7 +18,8 @@ defined( 'ABSPATH' ) || exit;
 // Optima Express is active AND registered on this site. It's network-activated on a
 // multisite, so "active" alone is true on every subsite and gates nothing.
 //
-// Only two Optima Express methods are called, both public: isActivated() and isKestrelAll().
+// Only public Optima Express methods are called: isActivated(), isKestrelAll() and
+// getAuthenticationToken() (with a get_option fallback for releases without it).
 // The URL patterns come from WordPress's own rewrite table, not from Optima Express classes,
 // so they survive refactors of that plugin and already reflect an admin's customised slugs.
 
@@ -123,6 +128,31 @@ function soames_oe_translate_rule( $regex, $target ) {
 }
 
 /**
+ * Optima Express's public authentication token: what its own front end prints as
+ * ihfKestrel.config.authenticationToken. Never the registration key.
+ */
+function soames_oe_authentication_token() {
+	$admin = iHomefinderAdmin::getInstance();
+	$token = method_exists( $admin, 'getAuthenticationToken' )
+		? $admin->getAuthenticationToken()
+		: get_option( 'ihf_authentication_token', '' );
+	return is_scalar( $token ) ? (string) $token : '';
+}
+
+// The token is baked into the static site at build time, and Optima Express replaces it on
+// every successful registration, including the one each of its settings saves runs. When
+// it changes, rebuild, so the site never serves a token the service no longer honours. This is
+// the ordinary deferred build, so it coalesces with any other pending one. update_option_*
+// fires only when the value actually changed; add_option_* covers a first registration.
+function soames_oe_token_changed() {
+	if ( function_exists( 'soames_schedule_build' ) ) {
+		soames_schedule_build();
+	}
+}
+add_action( 'update_option_ihf_authentication_token', 'soames_oe_token_changed' );
+add_action( 'add_option_ihf_authentication_token', 'soames_oe_token_changed' );
+
+/**
  * The `optimaExpress` key of soames/v1/settings: null unless active and registered.
  */
 function soames_oe_settings_payload() {
@@ -133,8 +163,8 @@ function soames_oe_settings_payload() {
 	return [
 		'mode'         => soames_oe_mode(),
 		'kestrel'      => [
-			'activationToken' => (string) iHomefinderAdmin::getInstance()->getActivationToken(),
-			'platform'        => 'wordpress',
+			'authenticationToken' => soames_oe_authentication_token(),
+			'platform'            => 'wordpress',
 		],
 		'routes'       => $routes['routes'],
 		'skippedRules' => $routes['skipped'],
