@@ -9,6 +9,34 @@ is a git tag `vX.Y.Z` whose GitHub Release carries the installable zip.
 
 ## [Unreleased]
 
+## [2.0.0] — 2026-11-22
+
+A **MAJOR** with a **security fix**: install it promptly, **after** theme `0.1.39`. The
+`optimaExpress.kestrel` REST payload no longer carries `activationToken`.
+
+### Security
+
+- **The Optima Express registration key is no longer published** (ORBI-91). Up to 1.7.0,
+  `soames/v1/settings` (public, anonymous) carried the site's registration key as
+  `optimaExpress.kestrel.activationToken`, and a static front end baked it into every IDX page.
+  Optima Express 9.0.2+ treats that key as a secret, and the service refuses it once it has been
+  public. After that, Optima Express settings saves stop reaching the IDX account. A site
+  that ran 1.7.0 or earlier with Optima Express registered should **register a new key after
+  upgrading** (and after its theme is on `0.1.39`).
+
+### Changed (breaking)
+
+- `optimaExpress.kestrel` is now `{ authenticationToken, platform }`: the **public** token
+  Optima Express prints in its own pages (`ihfKestrel.config.authenticationToken`).
+  `activationToken` is gone. Theme `0.1.38` and earlier read it for the edge's displayability
+  check, which would then 404 every listing, so upgrade the theme first.
+
+### Added
+
+- A rebuild is scheduled (the usual deferred build) whenever `ihf_authentication_token` is
+  added or changes. Optima Express replaces it on every successful registration, including the one
+  each of its settings saves runs, and the token is baked into the static site at build time.
+
 ## [1.7.0] — 2026-10-26
 
 A **MINOR** with a **security fix**: install it promptly. Two new REST keys; nothing an existing

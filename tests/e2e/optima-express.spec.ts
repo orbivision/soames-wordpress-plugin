@@ -16,7 +16,7 @@ import { wpCli, wpEval, login, WP_BASE } from "./wp";
 // fetched with a dummy token, so `mode` is never 'kestrel' here. A green run proves the gate,
 // the payload shape and the rewrite translation, never that Kestrel renders.
 
-const OE_VERSION = "8.7.7";
+const OE_VERSION = "9.0.2";
 const SETTINGS_URL = `${WP_BASE}/wp-json/soames/v1/settings`;
 const LISTING_DETAIL = "/homes-for-sale-details/:listingAddress/:listingNumber/:boardId";
 
@@ -54,9 +54,13 @@ test("active and registered: payload carries the Kestrel config and the routes",
     expect(oe).not.toBeNull();
 
     expect(["kestrel", "kestrel-detail", "legacy", "unknown"]).toContain(oe.mode);
-    expect(oe.kestrel).toEqual({ activationToken: "e2e-dummy-activation", platform: "wordpress" });
-    // The authentication token is a server-side secret and must never be in the payload.
-    expect(JSON.stringify(oe)).not.toContain("e2e-dummy-auth");
+    // ORBI-91: the PUBLIC authentication token, as Optima Express prints it in its own pages.
+    expect(oe.kestrel).toEqual({ authenticationToken: "e2e-dummy-auth", platform: "wordpress" });
+    // The registration key is a secret (Optima Express 9.0.2+ refuses it once it has been
+    // public), so it must appear nowhere in the public payload, by value or by name.
+    const settings = JSON.stringify(await (await request.get(SETTINGS_URL)).json());
+    expect(settings).not.toContain("e2e-dummy-activation");
+    expect(settings).not.toContain("activationToken");
 
     expect(typeof oe.skippedRules).toBe("number");
     expect(oe.routes.length, "no virtual-page routes translated").toBeGreaterThan(20);
@@ -68,6 +72,30 @@ test("active and registered: payload carries the Kestrel config and the routes",
     expect(oe.routes.map((r: { path: string }) => r.path)).toContain(LISTING_DETAIL);
   } finally {
     register(false);
+  }
+});
+
+test("a changed authentication token schedules a rebuild, an unchanged one doesn't", () => {
+  // ORBI-91: the token is baked into the static site, and Optima Express replaces it on every
+  // successful registration, so a change has to rebuild the site.
+  const EVENT = "soames_build_site";
+  const pending = () => wpEval(`echo wp_next_scheduled('${EVENT}') ? 'yes' : 'no';`).trim();
+  // Unroutable (RFC 5737 TEST-NET-1, discard port): nothing may reach a real Netlify build.
+  wpEval(`update_option('soames_build_hook_url', 'http://192.0.2.1:9/build');`);
+  try {
+    register(true);
+    wpEval(`wp_clear_scheduled_hook('${EVENT}');`);
+    wpEval(`update_option('ihf_authentication_token', 'e2e-dummy-auth');`);
+    expect(pending(), "same value: no rebuild").toBe("no");
+    wpEval(`update_option('ihf_authentication_token', 'e2e-dummy-auth-2');`);
+    expect(pending(), "new value: rebuild scheduled").toBe("yes");
+    register(false);
+    wpEval(`wp_clear_scheduled_hook('${EVENT}');`);
+    wpEval(`add_option('ihf_authentication_token', 'e2e-first-registration');`);
+    expect(pending(), "first registration: rebuild scheduled").toBe("yes");
+  } finally {
+    register(false);
+    wpEval(`wp_clear_scheduled_hook('${EVENT}'); delete_option('soames_build_hook_url');`);
   }
 });
 
