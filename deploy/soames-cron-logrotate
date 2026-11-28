@@ -1,0 +1,11 @@
+# ORBI-94: output of /etc/cron.d/soames-wp-cron (ORBI-77). Kept, not silenced — the entries once
+# failed unnoticed because their output was discarded. ~8 MB/month. copytruncate: cron appends (>>).
+/var/log/soames-cron.log {
+    weekly
+    rotate 8
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+}

@@ -159,9 +159,14 @@ always waiting for.
 ```bash
 sudo install -o root -g root -m 644 deploy/soames-wp-cron /etc/cron.d/soames-wp-cron
 sudo touch /var/log/soames-cron.log && sudo chown www-data:www-data /var/log/soames-cron.log
+sudo install -o root -g root -m 644 deploy/soames-cron-logrotate /etc/logrotate.d/soames-cron
 ```
 
-Four things that are easy to get wrong, each of which broke it once:
+The last line rotates the log (ORBI-94): weekly, 8 kept, compressed. It ran unrotated for
+two months and reached 20 MB, about 8 MB a month. It uses `copytruncate` because cron appends with
+`>>`. Installed on **2026-11-27**, and it matches this file by SHA-256.
+
+Five things that are easy to get wrong, each of which broke it once:
 
 - **WP-CLI must live somewhere `www-data` can reach** — `/usr/local/bin/wp`, root:root
   755. It was originally installed to `~/bin`, and `/home/<user>` is mode 0750, so
@@ -171,7 +176,10 @@ Four things that are easy to get wrong, each of which broke it once:
   `orbivision.net`.
 - **Never `>/dev/null`.** These entries failed silently for an entire debugging session
   because their output was discarded. A cron job that discards its errors cannot tell
-  you it is broken.
+  you it is broken. Rotate it instead of silencing it.
+- **A glob in a `sudo` command expands as YOUR user.** `/var/log/apache2/` isn't readable without
+  root, so `sudo zgrep … error.log*` receives the literal `error.log*` and reports `0`. Wrap the
+  command in `sudo sh -c '…'` (ORBI-94 got a false zero this way).
 - **Do not verify with "Deploy now."** That button fires the hook immediately and
   bypasses cron entirely, so it reports success on exactly the fault you are testing
   for. Verify by saving a post once and watching for a Netlify build.
